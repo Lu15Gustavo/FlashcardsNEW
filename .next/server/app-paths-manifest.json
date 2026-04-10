@@ -1,0 +1,15 @@
+{
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api/flashcards/generate/route": "app/api/flashcards/generate/route.js",
+  "/api/flashcards/review/route": "app/api/flashcards/review/route.js",
+  "/api/flashcards/update/route": "app/api/flashcards/update/route.js",
+  "/api/stripe/checkout/route": "app/api/stripe/checkout/route.js",
+  "/api/upload/route": "app/api/upload/route.js",
+  "/api/stripe/webhook/route": "app/api/stripe/webhook/route.js",
+  "/auth/page": "app/auth/page.js",
+  "/checkout/page": "app/checkout/page.js",
+  "/page": "app/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
+  "/progress/page": "app/progress/page.js",
+  "/upload/page": "app/upload/page.js"
+}
