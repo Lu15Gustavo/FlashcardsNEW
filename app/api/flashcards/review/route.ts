@@ -4,6 +4,8 @@ import { scoreCardReview } from "@/lib/srs";
 import { readCards, updateCardInStore } from "@/lib/demo-store";
 import { Flashcard } from "@/types";
 
+export const dynamic = "force-dynamic";
+
 type ReviewBody = {
   cardId?: string;
   quality?: number;

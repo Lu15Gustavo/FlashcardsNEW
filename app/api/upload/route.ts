@@ -5,6 +5,8 @@ import { generateFlashcardsWithGemini } from "@/lib/gemini";
 import { saveCards } from "@/lib/demo-store";
 import { getRouteSupabase } from "@/lib/supabase-server";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(request: Request) {
   try {
     const hasSupabaseEnv =

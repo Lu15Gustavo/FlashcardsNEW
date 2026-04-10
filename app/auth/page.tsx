@@ -18,20 +18,37 @@ export default function AuthPage() {
 
     if (mode === "login") {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
-      setMessage(error ? error.message : "Login realizado com sucesso.");
+      if (error) {
+        setMessage(error.message);
+        return;
+      }
+
+      setMessage("Login realizado com sucesso. Redirecionando...");
+      window.location.assign("/dashboard");
       return;
     }
 
     if (mode === "signup") {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: { name },
-          emailRedirectTo: `${window.location.origin}/dashboard`
+          emailRedirectTo: `${window.location.origin}/auth?mode=login`
         }
       });
-      setMessage(error ? error.message : "Cadastro enviado. Confira seu e-mail para confirmar.");
+      if (error) {
+        setMessage(error.message);
+        return;
+      }
+
+      if (data.session) {
+        setMessage("Cadastro realizado com sucesso. Redirecionando...");
+        window.location.assign("/dashboard");
+        return;
+      }
+
+      setMessage("Cadastro enviado. Confira seu e-mail para confirmar e depois faça login.");
       return;
     }
 

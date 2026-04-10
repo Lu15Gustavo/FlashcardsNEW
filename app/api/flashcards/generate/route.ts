@@ -3,6 +3,8 @@ import { readCards } from "@/lib/demo-store";
 import { getRouteSupabase } from "@/lib/supabase-server";
 import { Flashcard } from "@/types";
 
+export const dynamic = "force-dynamic";
+
 function mapDbCard(card: Record<string, unknown>): Flashcard {
   const documentRelation = card.documents;
   const documentName = Array.isArray(documentRelation)

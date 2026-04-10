@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getRouteSupabase } from "@/lib/supabase-server";
 
+export const dynamic = "force-dynamic";
+
 type UpdateBody = {
   cardId?: string;
   notes?: string;

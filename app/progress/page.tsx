@@ -1,5 +1,7 @@
 import { getServerSupabase } from "@/lib/supabase-server";
 
+export const dynamic = "force-dynamic";
+
 function formatDate(dateString: string) {
   return new Intl.DateTimeFormat("pt-BR", {
     day: "2-digit",

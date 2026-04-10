@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { getServerSupabase } from "@/lib/supabase-server";
 
+export const dynamic = "force-dynamic";
+
 export default async function DashboardPage() {
   let userEmail: string | null = null;
   const hasSupabaseEnv =

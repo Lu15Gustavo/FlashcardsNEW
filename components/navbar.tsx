@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const links = [
   { href: "/", label: "Início" },
@@ -15,15 +16,18 @@ export function Navbar() {
           FlashcardsNEW
         </Link>
 
-        <ul className="flex gap-4 text-sm font-bold text-brand-800">
-          {links.map((item) => (
-            <li key={item.href}>
-              <Link href={item.href} className="rounded px-3 py-2 hover:bg-brand-50">
-                {item.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <div className="flex items-center gap-3">
+          <ul className="hidden gap-4 text-sm font-bold text-brand-800 md:flex">
+            {links.map((item) => (
+              <li key={item.href}>
+                <Link href={item.href} className="rounded px-3 py-2 hover:bg-brand-50">
+                  {item.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <ThemeToggle />
+        </div>
       </nav>
     </header>
   );
