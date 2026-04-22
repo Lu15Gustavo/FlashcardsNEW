@@ -15,10 +15,20 @@ create table if not exists public.documents (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.decks (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  name text not null,
+  description text,
+  color text default '#3b82f6',
+  created_at timestamptz not null default now()
+);
+
 create table if not exists public.flashcards (
   id uuid primary key default uuid_generate_v4(),
   user_id uuid not null references auth.users(id) on delete cascade,
   document_id uuid references public.documents(id) on delete set null,
+  deck_id uuid references public.decks(id) on delete set null,
   question text not null,
   answer text not null,
   notes text,
@@ -48,6 +58,7 @@ create table if not exists public.flashcard_reviews (
 
 alter table public.profiles enable row level security;
 alter table public.documents enable row level security;
+alter table public.decks enable row level security;
 alter table public.flashcards enable row level security;
 alter table public.flashcard_reviews enable row level security;
 
@@ -57,8 +68,18 @@ create policy "profiles owner" on public.profiles
 create policy "documents owner" on public.documents
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
+create policy "decks owner" on public.decks
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
 create policy "flashcards owner" on public.flashcards
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 create policy "flashcard reviews owner" on public.flashcard_reviews
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- Índices para performance
+create index if not exists idx_flashcards_user_deck on public.flashcards(user_id, deck_id);
+create index if not exists idx_flashcards_user_due_at on public.flashcards(user_id, due_at);
+create index if not exists idx_flashcards_user_knowledge on public.flashcards(user_id, knowledge_level);
+create index if not exists idx_decks_user_id on public.decks(user_id);
+create index if not exists idx_reviews_flashcard_id on public.flashcard_reviews(flashcard_id);

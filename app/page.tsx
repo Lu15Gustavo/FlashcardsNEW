@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getServerSupabase } from "@/lib/supabase-server";
 
 const plans = [
   {
@@ -14,6 +16,30 @@ const plans = [
 ];
 
 export default function HomePage() {
+  const hasSupabaseEnv =
+    Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) && Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+
+  if (hasSupabaseEnv) {
+    return <HomeWithSessionRedirect />;
+  }
+
+  return <HomeContent />;
+}
+
+async function HomeWithSessionRedirect() {
+  const supabase = getServerSupabase();
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+
+  if (user) {
+    redirect("/dashboard");
+  }
+
+  return <HomeContent />;
+}
+
+function HomeContent() {
   return (
     <main className="page-shell py-14">
       <section className="grid gap-8 rounded-3xl border border-brand-100 bg-white/90 p-8 shadow-xl md:grid-cols-2 md:p-12">

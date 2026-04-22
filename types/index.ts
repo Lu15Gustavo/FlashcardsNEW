@@ -2,6 +2,8 @@ export type Flashcard = {
   id: string;
   documentId?: string;
   documentName?: string;
+  deckId?: string;
+  deckName?: string;
   question: string;
   answer: string;
   notes?: string;
@@ -11,4 +13,13 @@ export type Flashcard = {
   easeFactor: number;
   dueAt: string;
   knowledgeLevel: "difficult" | "normal" | "easy";
+};
+
+export type Deck = {
+  id: string;
+  userId: string;
+  name: string;
+  description?: string;
+  color: string;
+  createdAt: string;
 };

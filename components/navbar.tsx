@@ -1,24 +1,58 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { UserMenu } from "@/components/user-menu";
+import { getServerSupabase } from "@/lib/supabase-server";
 
 const links = [
   { href: "/", label: "Início" },
   { href: "/auth", label: "Login/Cadastro" },
   { href: "/dashboard", label: "Dashboard" },
-  { href: "/progress", label: "Progresso" }
+  { href: "/upload", label: "Enviar PDF" },
+  { href: "/study", label: "FlashCards" },
+  { href: "/decks", label: "Baralhos" }
 ];
 
-export function Navbar() {
+export async function Navbar() {
+  let isAuthenticated = false;
+  let userEmail = "";
+  const hasSupabaseEnv =
+    Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) && Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+
+  if (hasSupabaseEnv) {
+    const supabase = getServerSupabase();
+    const {
+      data: { user }
+    } = await supabase.auth.getUser();
+
+    isAuthenticated = Boolean(user);
+    userEmail = user?.email ?? "";
+  }
+
+  const visibleLinks = isAuthenticated
+    ? links.filter((item) => item.href !== "/" && item.href !== "/auth")
+    : links;
+
   return (
     <header className="sticky top-0 z-10 border-b border-brand-100 bg-white/90 backdrop-blur">
       <nav className="page-shell flex items-center justify-between py-4">
-        <Link href="/" className="text-xl font-black text-brand-700">
-          FlashcardsNEW
+        <Link href="/" className="flex items-center gap-2 text-xl font-black text-brand-700">
+          <span className="relative inline-flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-brand-100 bg-white/90 p-1 shadow-xl">
+            <Image
+              src="/logo-avatar.png"
+              alt="Logo FlashCardsNews"
+              width={44}
+              height={44}
+              className="rounded-full object-cover"
+              priority
+            />
+          </span>
+          <span>FlashCardsNews</span>
         </Link>
 
         <div className="flex items-center gap-3">
           <ul className="hidden gap-4 text-sm font-bold text-brand-800 md:flex">
-            {links.map((item) => (
+            {visibleLinks.map((item) => (
               <li key={item.href}>
                 <Link href={item.href} className="rounded px-3 py-2 hover:bg-brand-50">
                   {item.label}
@@ -26,6 +60,7 @@ export function Navbar() {
               </li>
             ))}
           </ul>
+          {isAuthenticated && userEmail ? <UserMenu email={userEmail} /> : null}
           <ThemeToggle />
         </div>
       </nav>

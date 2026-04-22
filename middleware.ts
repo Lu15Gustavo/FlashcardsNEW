@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs";
 
-const protectedRoutes = ["/dashboard", "/upload", "/study"];
+const protectedRoutes = ["/dashboard", "/upload", "/study", "/profile", "/decks"];
 
 export async function middleware(request: NextRequest) {
   const hasSupabaseEnv =
@@ -29,5 +29,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/upload/:path*", "/study/:path*"]
+  matcher: ["/dashboard/:path*", "/upload/:path*", "/study/:path*", "/profile/:path*", "/decks/:path*"]
 };

@@ -10,6 +10,11 @@ type GeminiResponse = {
   candidates?: GeminiCandidate[];
 };
 
+type GeminiGenerationResult = {
+  cards: GeneratedCard[];
+  stopAiFallback: boolean;
+};
+
 type GeneratedCard = {
   question: string;
   answer: string;
@@ -30,6 +35,83 @@ function extractJsonPayload(raw: string): unknown {
   return JSON.parse(trimmed);
 }
 
+function extractTopLevelObjectStrings(raw: string): string[] {
+  const startIndex = raw.indexOf("[");
+  const source = startIndex >= 0 ? raw.slice(startIndex) : raw;
+
+  const objects: string[] = [];
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  let objectStart = -1;
+
+  for (let index = 0; index < source.length; index += 1) {
+    const char = source[index];
+
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+      if (char === "\\") {
+        escaped = true;
+        continue;
+      }
+      if (char === '"') {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (char === '"') {
+      inString = true;
+      continue;
+    }
+
+    if (char === "{") {
+      if (depth === 0) {
+        objectStart = index;
+      }
+      depth += 1;
+      continue;
+    }
+
+    if (char === "}") {
+      if (depth > 0) {
+        depth -= 1;
+        if (depth === 0 && objectStart >= 0) {
+          objects.push(source.slice(objectStart, index + 1));
+          objectStart = -1;
+        }
+      }
+    }
+  }
+
+  return objects;
+}
+
+function recoverCardsFromBrokenJson(raw: string, maxCards: number): GeneratedCard[] {
+  const objectStrings = extractTopLevelObjectStrings(raw);
+  if (objectStrings.length === 0) {
+    return [];
+  }
+
+  const recoveredObjects: unknown[] = [];
+  for (const objectString of objectStrings) {
+    try {
+      recoveredObjects.push(JSON.parse(objectString));
+    } catch {
+      // Ignore malformed fragments and keep only valid objects.
+    }
+  }
+
+  if (recoveredObjects.length === 0) {
+    return [];
+  }
+
+  return normalizeCards(recoveredObjects, maxCards);
+}
+
 function normalizeTags(tags: unknown): string[] {
   if (!Array.isArray(tags)) {
     return [];
@@ -39,15 +121,22 @@ function normalizeTags(tags: unknown): string[] {
 }
 
 function normalizeCards(payload: unknown, maxCards: number): GeneratedCard[] {
-  if (!payload || typeof payload !== "object") {
-    return [];
+  let cardsArray: unknown[] = [];
+
+  if (Array.isArray(payload)) {
+    // Direct array: [{question, answer, ...}]
+    cardsArray = payload;
+  } else if (payload && typeof payload === "object") {
+    // Object with cards property: {cards: [{...}]}
+    const obj = payload as Record<string, unknown>;
+    if (Array.isArray(obj.cards)) {
+      cardsArray = obj.cards;
+    }
   }
 
-  const cardsArray = Array.isArray(payload)
-    ? payload
-    : Array.isArray((payload as { cards?: unknown }).cards)
-      ? ((payload as { cards: unknown[] }).cards ?? [])
-      : [];
+  if (!Array.isArray(cardsArray) || cardsArray.length === 0) {
+    return [];
+  }
 
   return cardsArray
     .map((item): GeneratedCard | null => {
@@ -55,16 +144,17 @@ function normalizeCards(payload: unknown, maxCards: number): GeneratedCard[] {
         return null;
       }
 
-      const question = String((item as { question?: unknown }).question ?? "").trim();
-      const answer = String((item as { answer?: unknown }).answer ?? "").trim();
-      const notes = String((item as { notes?: unknown }).notes ?? "").trim();
-      const tags = normalizeTags((item as { tags?: unknown }).tags);
+      const obj = item as Record<string, unknown>;
+      const question = String(obj.question ?? "").trim();
+      const answer = String(obj.answer ?? "").trim();
+      const notes = String(obj.notes ?? "").trim();
+      const tags = normalizeTags(obj.tags);
 
       if (!question || !answer) {
         return null;
       }
 
-      return { question, answer, notes, tags };
+      return { question, answer, notes: notes || undefined, tags };
     })
     .filter((item): item is GeneratedCard => item !== null)
     .slice(0, maxCards);
@@ -105,55 +195,101 @@ function chunkText(rawText: string, chunkSize = 3200, overlap = 240): string[] {
   return chunks;
 }
 
-async function generateCardsFromChunk(chunk: string, maxCards: number, model: string, apiKey: string): Promise<GeneratedCard[]> {
-  const prompt = [
-    "Voce e um gerador de flashcards para estudo ativo.",
-    `Gere no maximo ${maxCards} flashcards em portugues do Brasil com base no trecho enviado.`,
-    "Crie perguntas curtas, respostas objetivas e, se fizer sentido, inclua uma nota curta com contexto importante para o verso do card.",
-    "Sugira de 1 a 3 tags por card, com termos curtos como definicao, formula, conceito, exemplo, processo, data, passo a passo.",
-    "Retorne SOMENTE JSON valido no formato:",
-    "{\"cards\":[{\"question\":\"...\",\"answer\":\"...\",\"notes\":\"...\",\"tags\":[\"conceito\",\"definicao\"]}]}",
-    "Nao inclua markdown, comentarios ou texto extra.",
-    "Trecho base:",
-    chunk
-  ].join("\n\n");
+async function generateCardsFromChunk(
+  chunk: string,
+  maxCards: number,
+  model: string,
+  apiKey: string,
+  difficultyPrompt = "Crie flashcards bem equilibrados para estudo."
+): Promise<GeminiGenerationResult> {
+  const prompt = `Você é um professor experiente criando perguntas para alunos revisarem para prova.
 
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-    {
+Objetivo:
+- Transformar o trecho em flashcards de alta qualidade.
+- Gerar EXATAMENTE ${maxCards} cards em português do Brasil.
+- Cada card deve ter pergunta clara e resposta objetiva.
+
+Direção pedagógica:
+- ${difficultyPrompt}
+
+Regras pedagógicas:
+- A pergunta deve ser natural e específica, sem frases genéricas como "o que o texto destaca".
+- A resposta deve ter no máximo 2 frases curtas.
+- Se o trecho trouxer listas longas, quebre em perguntas menores e diretas.
+- Prefira perguntas que avaliem entendimento (causa, função, diferença, definição).
+- Não copie o trecho inteiro na resposta.
+
+Formato obrigatório de saída:
+- Retorne SOMENTE JSON válido.
+- Sem markdown, sem explicações extras.
+- Aceito: array direto ou objeto com chave cards.
+
+Exemplo de formato:
+[{"question":"Qual é a função do HTTP/2?","answer":"Melhorar desempenho com multiplexação e compressão de cabeçalhos","notes":"Foco em eficiência","tags":["conceito","rede"]}]
+
+Trecho base:
+"${chunk}"`;
+
+  try {
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    
+    const response = await fetch(apiUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
           responseMimeType: "application/json",
-          temperature: 0.3
+          temperature: 0.2,
+          maxOutputTokens: 4000,
+          topP: 0.9,
+          topK: 30
         }
       })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[Gemini] API Error no modelo ${model} (${response.status}): ${errorText.substring(0, 240)}`);
+      return { cards: [], stopAiFallback: response.status === 404 || response.status === 429 || response.status === 503 };
     }
-  );
 
-  if (!response.ok) {
-    return [];
-  }
+    const data = (await response.json()) as GeminiResponse;
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
-  const data = (await response.json()) as GeminiResponse;
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) {
+      console.error("[Gemini] Resposta vazia da API");
+      return { cards: [], stopAiFallback: false };
+    }
 
-  if (!text) {
-    return [];
-  }
-
-  try {
-    return normalizeCards(extractJsonPayload(text), maxCards);
-  } catch {
-    return [];
+    try {
+      const payload = extractJsonPayload(text);
+      const cards = normalizeCards(payload, maxCards);
+      console.log(`[Gemini] ✅ ${cards.length}/${maxCards} cards gerados com sucesso`);
+      return { cards, stopAiFallback: false };
+    } catch (parseError) {
+      console.error("[Gemini] Erro ao parsear JSON:", (parseError as Error).message);
+      const recoveredCards = recoverCardsFromBrokenJson(text, maxCards);
+      if (recoveredCards.length > 0) {
+        console.warn(`[Gemini] JSON parcial recuperado: ${recoveredCards.length}/${maxCards} cards aproveitados`);
+        return { cards: recoveredCards, stopAiFallback: false };
+      }
+      console.log("[Gemini] Raw (primeiros 500 chars):", text.substring(0, 500));
+      return { cards: [], stopAiFallback: false };
+    }
+  } catch (error) {
+    console.error("[Gemini] Erro geral:", error);
+    return { cards: [], stopAiFallback: false };
   }
 }
 
-export async function generateFlashcardsWithGemini(rawText: string, maxCards = 20): Promise<Flashcard[]> {
+export async function generateFlashcardsWithGemini(
+  rawText: string,
+  maxCards = 20,
+  difficultyPrompt?: string
+): Promise<Flashcard[]> {
   const apiKey = process.env.GEMINI_API_KEY;
-  const model = process.env.GEMINI_MODEL ?? "gemini-1.5-flash";
+  const preferredModel = process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
 
   if (!apiKey) {
     return [];
@@ -164,6 +300,8 @@ export async function generateFlashcardsWithGemini(rawText: string, maxCards = 2
     return [];
   }
 
+  const modelCandidates = [preferredModel];
+
   const collected: GeneratedCard[] = [];
   for (const chunk of chunks) {
     if (collected.length >= maxCards) {
@@ -171,8 +309,27 @@ export async function generateFlashcardsWithGemini(rawText: string, maxCards = 2
     }
 
     const remaining = maxCards - collected.length;
-    const chunkCards = await generateCardsFromChunk(chunk, remaining, model, apiKey);
+    let chunkCards: GeneratedCard[] = [];
+    let stopAiFallback = false;
+
+    for (const model of modelCandidates) {
+      const result = await generateCardsFromChunk(chunk, remaining, model, apiKey, difficultyPrompt);
+      chunkCards = result.cards;
+      stopAiFallback = result.stopAiFallback;
+      if (chunkCards.length > 0) {
+        break;
+      }
+
+      if (stopAiFallback) {
+        break;
+      }
+    }
+
     collected.push(...chunkCards);
+
+    if (stopAiFallback) {
+      break;
+    }
   }
 
   return collected.slice(0, maxCards).map((card) => ({

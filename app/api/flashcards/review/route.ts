@@ -6,6 +6,15 @@ import { Flashcard } from "@/types";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * POST /api/flashcards/review
+ * 
+ * Registra uma revisão de flashcard com qualidade da resposta (4 níveis):
+ * - Quality 1 = Difícil (errou, volta em 10 min, diminui ease)
+ * - Quality 2 = Médio (errou mas conseguiu lembrar, volta em 10 min)
+ * - Quality 4 = Bom (acertou com hesitação, intervalo normal)
+ * - Quality 5 = Fácil (acertou facilmente, intervalo aumentado)
+ */
 type ReviewBody = {
   cardId?: string;
   quality?: number;

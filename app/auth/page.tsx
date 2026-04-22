@@ -24,7 +24,7 @@ export default function AuthPage() {
       }
 
       setMessage("Login realizado com sucesso. Redirecionando...");
-      window.location.assign("/dashboard");
+      window.location.assign("/upload");
       return;
     }
 
@@ -44,7 +44,7 @@ export default function AuthPage() {
 
       if (data.session) {
         setMessage("Cadastro realizado com sucesso. Redirecionando...");
-        window.location.assign("/dashboard");
+        window.location.assign("/upload");
         return;
       }
 

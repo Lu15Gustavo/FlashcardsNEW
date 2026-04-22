@@ -4,11 +4,35 @@ import { buildFlashcardsFromText } from "@/lib/flashcards";
 import { generateFlashcardsWithGemini } from "@/lib/gemini";
 import { saveCards } from "@/lib/demo-store";
 import { getRouteSupabase } from "@/lib/supabase-server";
+import type { Flashcard } from "@/types";
 
 export const dynamic = "force-dynamic";
+const MAX_FLASHCARDS = 15;
+
+type GenerationMode = "standard" | "easy" | "medium" | "hard";
+
+function getGenerationConfig(mode: GenerationMode) {
+  switch (mode) {
+    case "easy":
+      return { totalCards: 5, knowledgeLevel: "easy" as const, prompt: "Crie flashcards fáceis, diretos e didáticos." };
+    case "medium":
+      return { totalCards: 5, knowledgeLevel: "normal" as const, prompt: "Crie flashcards médios, equilibrando definição e compreensão." };
+    case "hard":
+      return { totalCards: 5, knowledgeLevel: "difficult" as const, prompt: "Crie flashcards difíceis, mais analíticos e exigentes." };
+    case "standard":
+    default:
+      return {
+        totalCards: 15,
+        knowledgeLevel: "normal" as const,
+        prompt: "Crie uma mistura de 5 flashcards fáceis, 5 médios e 5 difíceis."
+      };
+  }
+}
 
 export async function POST(request: Request) {
   try {
+    console.log("[Upload] Iniciando processamento do PDF");
+
     const hasSupabaseEnv =
       Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) && Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
     const supabase = hasSupabaseEnv ? getRouteSupabase() : null;
@@ -22,6 +46,13 @@ export async function POST(request: Request) {
 
     const formData = await request.formData();
     const pdfFile = formData.get("pdf");
+    const modeRaw = String(formData.get("mode") ?? "standard").toLowerCase();
+    const deckIdRaw = formData.get("deckId");
+    const deckId = deckIdRaw ? String(deckIdRaw) : null;
+    
+    const generationMode: GenerationMode =
+      modeRaw === "easy" || modeRaw === "medium" || modeRaw === "hard" ? modeRaw : "standard";
+    const generationConfig = getGenerationConfig(generationMode);
 
     if (!(pdfFile instanceof File)) {
       return NextResponse.json({ message: "Arquivo PDF não encontrado." }, { status: 400 });
@@ -31,15 +62,56 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Envie um arquivo PDF válido." }, { status: 400 });
     }
 
+    // Se um deck foi especificado, valida se pertence ao usuário
+    if (deckId && supabase && user) {
+      const { data: deck } = await supabase
+        .from("decks")
+        .select("id")
+        .eq("id", deckId)
+        .eq("user_id", user.id)
+        .single();
+
+      if (!deck) {
+        return NextResponse.json(
+          { message: "Baralho não encontrado ou não pertence a você." },
+          { status: 404 }
+        );
+      }
+    }
+
     const arrayBuffer = await pdfFile.arrayBuffer();
-    const text = await extractPdfText(Buffer.from(arrayBuffer));
+
+    let text = "";
+    try {
+      text = await extractPdfText(Buffer.from(arrayBuffer));
+      console.log(`[Upload] Texto extraído com ${text.length} caracteres`);
+    } catch (extractError) {
+      console.error("[Upload] Falha ao extrair texto do PDF:", extractError);
+      return NextResponse.json({ message: "Erro ao ler o PDF enviado." }, { status: 500 });
+    }
 
     if (!text.trim()) {
       return NextResponse.json({ message: "Nao foi possivel extrair texto desse PDF." }, { status: 400 });
     }
 
-    const aiCards = await generateFlashcardsWithGemini(text, 20);
-    const cards = aiCards.length > 0 ? aiCards : buildFlashcardsFromText(text);
+    let aiCards: Flashcard[] = [];
+    try {
+      aiCards = await generateFlashcardsWithGemini(text, generationConfig.totalCards, generationConfig.prompt);
+      console.log(`[Upload] IA Gemini retornou ${aiCards.length} cards`);
+    } catch (geminiError) {
+      console.error("[Upload] Falha ao gerar cards com Gemini:", geminiError);
+    }
+
+    const sourceCards = aiCards.length > 0 ? aiCards : buildFlashcardsFromText(text);
+    const cards: Flashcard[] = sourceCards.slice(0, generationConfig.totalCards).map((card, index): Flashcard => {
+      if (generationMode === "standard") {
+        const difficulty: Flashcard["knowledgeLevel"] = index < 5 ? "easy" : index < 10 ? "normal" : "difficult";
+        return { ...card, knowledgeLevel: difficulty };
+      }
+
+      return { ...card, knowledgeLevel: generationConfig.knowledgeLevel };
+    });
+    console.log(`[Upload] Total de ${cards.length} cards após fallback (fonte: ${aiCards.length > 0 ? "IA" : "Fallback"})`);
 
     if (supabase && user) {
       const { data: documentRow, error: documentError } = await supabase
@@ -53,12 +125,17 @@ export async function POST(request: Request) {
         .single();
 
       if (documentError || !documentRow) {
-        return NextResponse.json({ message: "Erro ao salvar o PDF no banco." }, { status: 500 });
+        console.error("[Upload] Erro ao salvar documento:", documentError);
+        saveCards(cards);
+        return NextResponse.json({
+          message: `${cards.length} flashcards gerados com sucesso, mas não foi possível salvar no banco. Eles foram mantidos localmente.`
+        });
       }
 
       const cardsToInsert = cards.map((card) => ({
         user_id: user.id,
         document_id: documentRow.id,
+        deck_id: deckId || null,
         question: card.question,
         answer: card.answer,
         notes: card.notes ?? null,
@@ -73,7 +150,11 @@ export async function POST(request: Request) {
       const { error: cardsError } = await supabase.from("flashcards").insert(cardsToInsert);
 
       if (cardsError) {
-        return NextResponse.json({ message: "Erro ao salvar flashcards no banco." }, { status: 500 });
+        console.error("[Upload] Erro ao salvar flashcards:", cardsError);
+        saveCards(cards);
+        return NextResponse.json({
+          message: `${cards.length} flashcards gerados com sucesso, mas houve falha ao salvar no banco. Eles foram mantidos localmente.`
+        });
       }
     } else {
       saveCards(cards);
@@ -84,7 +165,8 @@ export async function POST(request: Request) {
     return NextResponse.json({
       message: `${cards.length} flashcards gerados com sucesso via ${source}.`
     });
-  } catch {
+  } catch (error) {
+    console.error("[Upload] Erro não tratado:", error);
     return NextResponse.json({ message: "Erro ao processar o PDF." }, { status: 500 });
   }
 }
