@@ -10,6 +10,7 @@ export default function AuthPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [message, setMessage] = useState<string>("");
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
@@ -29,6 +30,11 @@ export default function AuthPage() {
     }
 
     if (mode === "signup") {
+      if (password !== confirmPassword) {
+        setMessage("A confirmação de senha não confere.");
+        return;
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -65,13 +71,37 @@ export default function AuthPage() {
         <p className="mt-2 text-brand-900/80">Login, cadastro e recuperação de senha.</p>
 
         <div className="mt-5 flex flex-wrap gap-2">
-          <button className="btn btn-secondary" onClick={() => setMode("login")} type="button">
+          <button
+            className={`rounded-xl border px-4 py-2 text-sm font-black transition-all duration-200 active:scale-[0.98] ${
+              mode === "login"
+                ? "border-brand-500 bg-brand-600 text-white shadow-lg shadow-brand-900/30"
+                : "border-brand-300 bg-brand-950/35 text-brand-100 hover:-translate-y-0.5 hover:border-brand-500 hover:bg-brand-900/45"
+            }`}
+            onClick={() => setMode("login")}
+            type="button"
+          >
             Login
           </button>
-          <button className="btn btn-secondary" onClick={() => setMode("signup")} type="button">
+          <button
+            className={`rounded-xl border px-4 py-2 text-sm font-black transition-all duration-200 active:scale-[0.98] ${
+              mode === "signup"
+                ? "border-brand-500 bg-brand-600 text-white shadow-lg shadow-brand-900/30"
+                : "border-brand-300 bg-brand-950/35 text-brand-100 hover:-translate-y-0.5 hover:border-brand-500 hover:bg-brand-900/45"
+            }`}
+            onClick={() => setMode("signup")}
+            type="button"
+          >
             Cadastro
           </button>
-          <button className="btn btn-secondary" onClick={() => setMode("forgot")} type="button">
+          <button
+            className={`rounded-xl border px-4 py-2 text-sm font-black transition-all duration-200 active:scale-[0.98] ${
+              mode === "forgot"
+                ? "border-brand-500 bg-brand-600 text-white shadow-lg shadow-brand-900/30"
+                : "border-brand-300 bg-brand-950/35 text-brand-100 hover:-translate-y-0.5 hover:border-brand-500 hover:bg-brand-900/45"
+            }`}
+            onClick={() => setMode("forgot")}
+            type="button"
+          >
             Esqueci minha senha
           </button>
         </div>
@@ -116,7 +146,26 @@ export default function AuthPage() {
             </div>
           )}
 
-          <button type="submit" className="btn btn-primary w-full">
+          {mode === "signup" && (
+            <div>
+              <label htmlFor="confirmPassword" className="mb-1 block text-sm font-bold text-brand-800">
+                Confirmar senha
+              </label>
+              <input
+                id="confirmPassword"
+                className="input"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
+            </div>
+          )}
+
+          <button
+            type="submit"
+            className="w-full rounded-2xl bg-gradient-to-r from-brand-600 to-brand-700 px-6 py-3 font-black text-white shadow-lg shadow-brand-950/25 transition-all duration-200 hover:-translate-y-0.5 hover:from-brand-500 hover:to-brand-600 active:scale-[0.99]"
+          >
             {mode === "login" ? "Entrar" : mode === "signup" ? "Criar conta" : "Enviar recuperação"}
           </button>
         </form>

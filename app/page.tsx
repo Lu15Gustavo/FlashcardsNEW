@@ -27,7 +27,7 @@ export default function HomePage() {
 }
 
 async function HomeWithSessionRedirect() {
-  const supabase = getServerSupabase();
+  const supabase = await getServerSupabase();
   const {
     data: { user }
   } = await supabase.auth.getUser();

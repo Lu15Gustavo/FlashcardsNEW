@@ -32,7 +32,7 @@ function mapDbCard(card: Record<string, unknown>): Flashcard {
 }
 
 export async function GET() {
-  const supabase = getRouteSupabase();
+  const supabase = await getRouteSupabase();
   const {
     data: { user }
   } = await supabase.auth.getUser();

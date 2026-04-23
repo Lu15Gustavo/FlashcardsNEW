@@ -5,6 +5,7 @@ export const dynamic = "force-dynamic";
 
 type Body = {
   name?: string;
+  email?: string;
 };
 
 export async function POST(request: Request) {
@@ -16,10 +17,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Supabase não configurado." }, { status: 400 });
     }
 
-    const body = (await request.json()) as Body;
-    const name = String(body.name ?? "").trim().slice(0, 120);
-
-    const supabase = getRouteSupabase();
+    const supabase = await getRouteSupabase();
     const {
       data: { user }
     } = await supabase.auth.getUser();
@@ -28,9 +26,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Você precisa estar logado." }, { status: 401 });
     }
 
+    const body = (await request.json()) as Body;
+    const name = String(body.name ?? "").trim().slice(0, 120);
+    const email = String(body.email ?? user.email ?? "").trim().toLowerCase().slice(0, 320);
+
     const { error } = await supabase.from("profiles").upsert(
       {
         id: user.id,
+        email,
         name,
         plan: "basic"
       },

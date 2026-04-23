@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserMenu } from "@/components/user-menu";
+import { FlashcardsNavLink } from "@/components/flashcards-nav-link";
 import { getServerSupabase } from "@/lib/supabase-server";
 
 const links = [
@@ -9,8 +10,7 @@ const links = [
   { href: "/auth", label: "Login/Cadastro" },
   { href: "/dashboard", label: "Dashboard" },
   { href: "/upload", label: "Enviar PDF" },
-  { href: "/study", label: "FlashCards" },
-  { href: "/decks", label: "Baralhos" }
+  { href: "/decks", label: "Decks" }
 ];
 
 export async function Navbar() {
@@ -20,7 +20,7 @@ export async function Navbar() {
     Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) && Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
   if (hasSupabaseEnv) {
-    const supabase = getServerSupabase();
+    const supabase = await getServerSupabase();
     const {
       data: { user }
     } = await supabase.auth.getUser();
@@ -59,6 +59,9 @@ export async function Navbar() {
                 </Link>
               </li>
             ))}
+            <li>
+              <FlashcardsNavLink />
+            </li>
           </ul>
           {isAuthenticated && userEmail ? <UserMenu email={userEmail} /> : null}
           <ThemeToggle />

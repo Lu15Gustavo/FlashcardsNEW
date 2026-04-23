@@ -25,7 +25,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Supabase nao configurado." }, { status: 400 });
     }
 
-    const supabase = getRouteSupabase();
+    const supabase = await getRouteSupabase();
     const {
       data: { user }
     } = await supabase.auth.getUser();

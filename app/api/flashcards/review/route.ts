@@ -58,7 +58,7 @@ export async function POST(request: Request) {
       Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) && Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
     if (hasSupabaseEnv) {
-      const supabase = getRouteSupabase();
+      const supabase = await getRouteSupabase();
       const {
         data: { user }
       } = await supabase.auth.getUser();

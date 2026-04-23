@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Flashcard } from "@/types";
 
 type ReviewPayload = {
@@ -45,6 +46,7 @@ function statusLabel(card: Flashcard) {
 }
 
 export default function StudyPage() {
+  const searchParams = useSearchParams();
   const [cards, setCards] = useState<Flashcard[]>([]);
   const [documents, setDocuments] = useState<DocumentOption[]>([]);
   const [selectedDocumentId, setSelectedDocumentId] = useState<string>("all");
@@ -140,7 +142,7 @@ export default function StudyPage() {
   };
 
   useEffect(() => {
-    const queryDeckId = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("deckId")?.trim() : "";
+    const queryDeckId = searchParams.get("deckId")?.trim() ?? "";
 
     if (queryDeckId) {
       void loadCards(undefined, queryDeckId).then((loadedCards) => {
@@ -157,7 +159,7 @@ export default function StudyPage() {
     }
 
     void loadCards();
-  }, []);
+  }, [searchParams]);
 
   const startWithDocument = async (documentId: string) => {
     setSelectedDocumentId(documentId);
@@ -328,33 +330,11 @@ export default function StudyPage() {
           <p className="mt-3 text-brand-800">Você revisou tudo e corrigiu os cards que tinha errado.</p>
           <button
             type="button"
-            className="mt-6 btn btn-primary px-8 py-3 text-lg font-bold"
+            className="mt-6 inline-flex items-center justify-center rounded-2xl border border-brand-400/40 bg-brand-700 px-8 py-3 text-lg font-bold text-white shadow-lg transition hover:bg-brand-600"
             onClick={() => void loadCards(selectedDocumentId === "all" ? undefined : selectedDocumentId)}
           >
             Estudar novamente
           </button>
-          <button type="button" className="mt-3 btn btn-secondary px-8 py-3 text-lg font-bold" onClick={() => setStudyStarted(false)}>
-            Ver lista de flashcards
-          </button>
-          {documents.length > 1 ? (
-            <button
-              type="button"
-              className="mt-3 btn btn-secondary px-8 py-3 text-lg font-bold"
-              onClick={() => {
-                setMustChooseDocument(true);
-                setStudyStarted(false);
-                setCards([]);
-                setSessionQueue([]);
-                setCurrentIndex(0);
-                setWrongCardIds([]);
-                setRound(1);
-                setCompleted(false);
-                setFlipped(false);
-              }}
-            >
-              Escolher outro PDF
-            </button>
-          ) : null}
         </section>
       ) : (
         <>

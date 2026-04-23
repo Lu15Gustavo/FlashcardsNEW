@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 /**
  * PUT /api/decks/[id]
- * Atualiza um baralho (deck) existente
+ * Atualiza um Decks existente
  */
 async function handlePUT(request: Request, props: { params: Promise<{ id: string }> }) {
   try {
@@ -17,7 +17,7 @@ async function handlePUT(request: Request, props: { params: Promise<{ id: string
       color?: string;
     };
 
-    const supabase = getRouteSupabase();
+    const supabase = await getRouteSupabase();
     const {
       data: { user }
     } = await supabase.auth.getUser();
@@ -39,7 +39,7 @@ async function handlePUT(request: Request, props: { params: Promise<{ id: string
 
     if (!existingDeck) {
       return NextResponse.json(
-        { message: "Baralho não encontrado." },
+        { message: "Decks não encontrado." },
         { status: 404 }
       );
     }
@@ -66,7 +66,7 @@ async function handlePUT(request: Request, props: { params: Promise<{ id: string
 
     if (error) {
       return NextResponse.json(
-        { message: "Erro ao atualizar baralho." },
+        { message: "Erro ao atualizar Decks." },
         { status: 500 }
       );
     }
@@ -91,13 +91,13 @@ async function handlePUT(request: Request, props: { params: Promise<{ id: string
 
 /**
  * DELETE /api/decks/[id]
- * Deleta um baralho (deck) e todos seus flashcards
+ * Deleta um Decks e todos seus flashcards
  */
 async function handleDELETE(request: Request, props: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await props.params;
 
-    const supabase = getRouteSupabase();
+    const supabase = await getRouteSupabase();
     const {
       data: { user }
     } = await supabase.auth.getUser();
@@ -119,7 +119,7 @@ async function handleDELETE(request: Request, props: { params: Promise<{ id: str
 
     if (!existingDeck) {
       return NextResponse.json(
-        { message: "Baralho não encontrado." },
+        { message: "Decks não encontrado." },
         { status: 404 }
       );
     }
@@ -133,13 +133,13 @@ async function handleDELETE(request: Request, props: { params: Promise<{ id: str
 
     if (error) {
       return NextResponse.json(
-        { message: "Erro ao deletar baralho." },
+        { message: "Erro ao deletar Decks." },
         { status: 500 }
       );
     }
 
     return NextResponse.json(
-      { message: "Baralho deletado com sucesso." },
+      { message: "Decks deletado com sucesso." },
       { status: 200 }
     );
   } catch (error) {

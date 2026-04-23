@@ -35,7 +35,7 @@ export async function POST(request: Request) {
 
     const hasSupabaseEnv =
       Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) && Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
-    const supabase = hasSupabaseEnv ? getRouteSupabase() : null;
+    const supabase = hasSupabaseEnv ? await getRouteSupabase() : null;
     const {
       data: { user }
     } = supabase ? await supabase.auth.getUser() : { data: { user: null } };
@@ -73,7 +73,7 @@ export async function POST(request: Request) {
 
       if (!deck) {
         return NextResponse.json(
-          { message: "Baralho não encontrado ou não pertence a você." },
+          { message: "Decks não encontrado ou não pertence a você." },
           { status: 404 }
         );
       }

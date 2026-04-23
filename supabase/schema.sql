@@ -2,10 +2,65 @@ create extension if not exists "uuid-ossp";
 
 create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
+  email text unique,
   name text,
   plan text not null default 'basic',
+  updated_at timestamptz not null default now(),
   created_at timestamptz not null default now()
 );
+
+create index if not exists idx_profiles_email on public.profiles(email);
+
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into public.profiles (id, email, name, plan)
+  values (
+    new.id,
+    new.email,
+    nullif(trim(coalesce(new.raw_user_meta_data ->> 'name', '')), ''),
+    'basic'
+  )
+  on conflict (id) do update
+    set email = excluded.email,
+        name = coalesce(excluded.name, public.profiles.name),
+        updated_at = now();
+
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+
+create trigger on_auth_user_created
+after insert on auth.users
+for each row execute function public.handle_new_user();
+
+create or replace function public.handle_user_email_update()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  update public.profiles
+    set email = new.email,
+        updated_at = now()
+  where id = new.id;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_email_updated on auth.users;
+
+create trigger on_auth_user_email_updated
+after update of email on auth.users
+for each row execute function public.handle_user_email_update();
 
 create table if not exists public.documents (
   id uuid primary key default uuid_generate_v4(),

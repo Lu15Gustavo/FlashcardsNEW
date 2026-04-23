@@ -28,6 +28,7 @@ export default function UploadPage() {
   const [selectedDeckId, setSelectedDeckId] = useState<string | null>(null);
   const [loadingDecks, setLoadingDecks] = useState(true);
   const [errorDecks, setErrorDecks] = useState("");
+  const selectedDeck = selectedDeckId ? decks.find((deck) => deck.id === selectedDeckId) ?? null : null;
 
   useEffect(() => {
     const loadDecks = async () => {
@@ -44,14 +45,14 @@ export default function UploadPage() {
 
           if (preferredDeckExists) {
             setSelectedDeckId(queryDeckId ?? null);
-          } else if (nextDecks.length > 0) {
-            setSelectedDeckId(nextDecks[0].id);
+          } else {
+            setSelectedDeckId(null);
           }
         } else {
-          setErrorDecks("Não foi possível carregar seus baralhos.");
+          setErrorDecks("Não foi possível carregar seus Decks.");
         }
       } catch {
-        setErrorDecks("Erro ao carregar baralhos.");
+        setErrorDecks("Erro ao carregar Decks.");
       } finally {
         setLoadingDecks(false);
       }
@@ -164,42 +165,125 @@ export default function UploadPage() {
 
             <div>
               <div className="mb-3 flex items-center justify-between">
-                <span className="block text-sm font-bold text-brand-700">Baralho (opcional)</span>
+                <span className="block text-sm font-bold text-brand-700">Deck (opcional)</span>
                 <a
                   href="/decks"
                   className="text-xs font-bold text-brand-600 hover:text-brand-700 underline"
                 >
-                  Gerenciar baralhos
+                  Gerenciar Decks
                 </a>
               </div>
 
               {loadingDecks ? (
-                <p className="text-xs text-brand-600">Carregando baralhos...</p>
+                <p className="text-xs text-brand-600">Carregando Decks...</p>
               ) : errorDecks ? (
                 <p className="text-xs text-rose-600">{errorDecks}</p>
               ) : decks.length === 0 ? (
                 <div className="rounded-2xl border border-brand-200 bg-brand-50/50 p-4">
                   <p className="text-sm text-brand-700">
-                    Você ainda não criou nenhum baralho.{" "}
+                    Você ainda não criou nenhum Deck.{" "}
                     <a href="/decks" className="font-bold underline hover:text-brand-900">
                       Criar um agora
                     </a>
                   </p>
                 </div>
               ) : (
-                <select
-                  value={selectedDeckId || ""}
-                  onChange={(e) => setSelectedDeckId(e.target.value || null)}
-                  className="w-full rounded-2xl border border-brand-300 bg-brand-950/35 px-4 py-3 text-white focus:border-brand-500 focus:outline-none"
-                  disabled={isSubmitting}
-                >
-                  <option value="">-- Sem baralho --</option>
-                  {decks.map((deck) => (
-                    <option key={deck.id} value={deck.id}>
-                      {deck.name}
-                    </option>
-                  ))}
-                </select>
+                <div className="space-y-3">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedDeckId(null)}
+                    disabled={isSubmitting}
+                    className={`group relative flex w-full items-center justify-between overflow-hidden rounded-3xl border p-4 text-left transition-all duration-200 ${
+                      selectedDeckId === null
+                        ? "border-emerald-300/50 bg-gradient-to-br from-brand-700/85 via-brand-900/80 to-emerald-950/60 shadow-[0_0_0_1px_rgba(16,185,129,0.20),0_18px_40px_rgba(15,23,42,0.42)] ring-2 ring-emerald-300/30"
+                        : "border-brand-300 bg-brand-950/40 hover:-translate-y-0.5 hover:border-brand-500 hover:bg-brand-950/55 hover:shadow-lg"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={`flex h-10 w-10 items-center justify-center rounded-2xl border text-sm font-black ${
+                          selectedDeckId === null
+                            ? "border-emerald-300/70 bg-emerald-400/20 text-emerald-100"
+                            : "border-brand-400/60 bg-brand-600/10 text-brand-100"
+                        }`}
+                      >
+                        {selectedDeckId === null ? "✓" : "∅"}
+                      </span>
+                      <div>
+                        <p className={`text-sm font-black ${selectedDeckId === null ? "text-brand-50" : "text-white"}`}>
+                          Sem Deck
+                        </p>
+                        <p className={`text-xs ${selectedDeckId === null ? "text-brand-100/90" : "text-white/65"}`}>
+                          Enviar o PDF sem associar a nenhum Deck.
+                        </p>
+                      </div>
+                    </div>
+                    {selectedDeckId === null ? (
+                      <span className="rounded-full bg-emerald-400/20 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-emerald-100 ring-1 ring-emerald-300/35">
+                        Selecionado
+                      </span>
+                    ) : null}
+                  </button>
+
+                  <div className="grid gap-3">
+                    {decks.map((deck) => {
+                      const isSelected = selectedDeckId === deck.id;
+
+                      return (
+                        <button
+                          key={deck.id}
+                          type="button"
+                          onClick={() => setSelectedDeckId(deck.id)}
+                          disabled={isSubmitting}
+                          className={`group relative flex w-full items-center justify-between overflow-hidden rounded-3xl border p-4 text-left transition-all duration-200 ${
+                            isSelected
+                              ? "border-emerald-300/50 bg-gradient-to-br from-brand-700/85 via-brand-900/80 to-emerald-950/60 shadow-[0_0_0_1px_rgba(16,185,129,0.20),0_18px_40px_rgba(15,23,42,0.42)] ring-2 ring-emerald-300/30"
+                              : "border-brand-300 bg-brand-950/40 hover:-translate-y-0.5 hover:border-brand-500 hover:bg-brand-950/55 hover:shadow-lg"
+                          }`}
+                        >
+                          <div className="flex min-w-0 items-center gap-3">
+                            <span
+                              className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl border text-sm font-black ${
+                                isSelected
+                                  ? "border-emerald-300/70 bg-emerald-400/20 text-emerald-100"
+                                  : "border-brand-400/60 bg-brand-600/10 text-brand-100"
+                              }`}
+                              style={!isSelected ? { backgroundColor: `${deck.color}22` } : undefined}
+                            >
+                              {isSelected ? "✓" : "●"}
+                            </span>
+                            <div className="min-w-0">
+                              <p className={`truncate text-sm font-black ${isSelected ? "text-brand-50" : "text-white"}`}>
+                                {deck.name}
+                              </p>
+                              <p className={`truncate text-xs ${isSelected ? "text-brand-100/90" : "text-white/65"}`}>
+                                {deck.description || "Deck pronto para receber o PDF."}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-end gap-2">
+                            <span
+                              className="h-3 w-14 rounded-full shadow-sm"
+                              style={{ backgroundColor: deck.color }}
+                            />
+                            {isSelected ? (
+                              <span className="rounded-full bg-emerald-400/20 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-emerald-100 ring-1 ring-emerald-300/35">
+                                Selecionado
+                              </span>
+                            ) : null}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {selectedDeck ? (
+                    <div className="rounded-2xl border border-brand-200/40 bg-brand-900/35 px-4 py-3 text-sm text-white shadow-sm">
+                      <span className="font-black text-brand-100">Deck selecionado:</span>{" "}
+                      <span className="font-bold text-white">{selectedDeck.name}</span>
+                    </div>
+                  ) : null}
+                </div>
               )}
             </div>
 

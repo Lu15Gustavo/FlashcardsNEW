@@ -36,7 +36,7 @@ export default async function ProgressPage() {
     );
   }
 
-  const supabase = getServerSupabase();
+  const supabase = await getServerSupabase();
   const {
     data: { user }
   } = await supabase.auth.getUser();

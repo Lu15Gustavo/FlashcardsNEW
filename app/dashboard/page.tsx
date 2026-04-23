@@ -50,7 +50,7 @@ export default async function DashboardPage() {
     );
   }
 
-  const supabase = getServerSupabase();
+  const supabase = await getServerSupabase();
   const {
     data: { user }
   } = await supabase.auth.getUser();

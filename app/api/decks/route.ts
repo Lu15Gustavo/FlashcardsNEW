@@ -6,11 +6,11 @@ export const dynamic = "force-dynamic";
 
 /**
  * GET /api/decks
- * Lista todos os baralhos (decks) do usuário autenticado
+ * Lista todos os Decks do usuário autenticado
  */
 async function handleGET() {
   try {
-    const supabase = getRouteSupabase();
+    const supabase = await getRouteSupabase();
     const {
       data: { user }
     } = await supabase.auth.getUser();
@@ -30,7 +30,7 @@ async function handleGET() {
 
     if (error) {
       return NextResponse.json(
-        { message: "Erro ao carregar baralhos." },
+        { message: "Erro ao carregar Decks." },
         { status: 500 }
       );
     }
@@ -55,7 +55,7 @@ async function handleGET() {
 
 /**
  * POST /api/decks
- * Cria um novo baralho (deck)
+ * Cria um novo Decks
  */
 async function handlePOST(request: Request) {
   try {
@@ -69,12 +69,12 @@ async function handlePOST(request: Request) {
 
     if (!name) {
       return NextResponse.json(
-        { message: "Nome do baralho é obrigatório." },
+        { message: "Nome do Decks é obrigatório." },
         { status: 400 }
       );
     }
 
-    const supabase = getRouteSupabase();
+    const supabase = await getRouteSupabase();
     const {
       data: { user }
     } = await supabase.auth.getUser();
@@ -99,7 +99,7 @@ async function handlePOST(request: Request) {
 
     if (error) {
       return NextResponse.json(
-        { message: "Erro ao criar baralho." },
+        { message: "Erro ao criar Decks." },
         { status: 500 }
       );
     }

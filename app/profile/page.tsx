@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase-client";
 
 type ProfileRow = {
+  email: string | null;
   name: string | null;
   plan: string | null;
 };
@@ -29,9 +30,14 @@ export default function ProfilePage() {
 
       setEmail(user.email ?? "");
 
-      const { data } = await supabase.from("profiles").select("name, plan").eq("id", user.id).single<ProfileRow>();
+      const { data } = await supabase
+        .from("profiles")
+        .select("email, name, plan")
+        .eq("id", user.id)
+        .single<ProfileRow>();
 
       if (data) {
+        setEmail(data.email ?? user.email ?? "");
         setName(data.name ?? "");
         setPlan(data.plan ?? "basic");
       }
@@ -51,7 +57,7 @@ export default function ProfilePage() {
       const response = await fetch("/api/profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name })
+        body: JSON.stringify({ name, email })
       });
 
       const data = (await response.json()) as { message?: string };

@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 /**
  * PATCH /api/flashcards/[id]/deck
- * Associa ou desassocia um flashcard a um baralho (deck)
+ * Associa ou desassocia um flashcard a um Decks
  */
 async function handlePATCH(
   request: Request,
@@ -17,7 +17,7 @@ async function handlePATCH(
       deckId?: string | null;
     };
 
-    const supabase = getRouteSupabase();
+    const supabase = await getRouteSupabase();
     const {
       data: { user }
     } = await supabase.auth.getUser();
@@ -55,7 +55,7 @@ async function handlePATCH(
 
       if (!deck) {
         return NextResponse.json(
-          { message: "Baralho não encontrado." },
+          { message: "Decks não encontrado." },
           { status: 404 }
         );
       }
@@ -79,8 +79,8 @@ async function handlePATCH(
 
     return NextResponse.json({
       message: body.deckId
-        ? "Flashcard associado ao baralho com sucesso."
-        : "Flashcard desassociado do baralho.",
+        ? "Flashcard associado ao Decks com sucesso."
+        : "Flashcard desassociado do Decks.",
       cardId: updatedCard.id,
       deckId: updatedCard.deck_id || null
     });
