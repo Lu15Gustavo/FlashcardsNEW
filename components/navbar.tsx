@@ -1,9 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { UserMenu } from "@/components/user-menu";
 import { FlashcardsNavLink } from "@/components/flashcards-nav-link";
-import { getServerSupabase } from "@/lib/supabase-server";
 
 const links = [
   { href: "/", label: "Início" },
@@ -14,30 +12,7 @@ const links = [
 ];
 
 export async function Navbar() {
-  let isAuthenticated = false;
-  let userEmail = "";
-  const hasSupabaseEnv =
-    Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) && Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
-
-  if (hasSupabaseEnv) {
-    try {
-      const supabase = await getServerSupabase();
-      const {
-        data: { user }
-      } = await supabase.auth.getUser();
-
-      isAuthenticated = Boolean(user);
-      userEmail = user?.email ?? "";
-    } catch {
-      // Em produção, preferimos renderizar o layout deslogado em vez de derrubar a página.
-      isAuthenticated = false;
-      userEmail = "";
-    }
-  }
-
-  const visibleLinks = isAuthenticated
-    ? links.filter((item) => item.href !== "/" && item.href !== "/auth")
-    : links;
+  const visibleLinks = links;
 
   return (
     <header className="sticky top-0 z-10 border-b border-brand-100 bg-white/90 backdrop-blur">
@@ -69,7 +44,6 @@ export async function Navbar() {
               <FlashcardsNavLink />
             </li>
           </ul>
-          {isAuthenticated && userEmail ? <UserMenu email={userEmail} /> : null}
           <ThemeToggle />
         </div>
       </nav>
