@@ -20,13 +20,19 @@ export async function Navbar() {
     Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) && Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
   if (hasSupabaseEnv) {
-    const supabase = await getServerSupabase();
-    const {
-      data: { user }
-    } = await supabase.auth.getUser();
+    try {
+      const supabase = await getServerSupabase();
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
 
-    isAuthenticated = Boolean(user);
-    userEmail = user?.email ?? "";
+      isAuthenticated = Boolean(user);
+      userEmail = user?.email ?? "";
+    } catch {
+      // Em produção, preferimos renderizar o layout deslogado em vez de derrubar a página.
+      isAuthenticated = false;
+      userEmail = "";
+    }
   }
 
   const visibleLinks = isAuthenticated

@@ -27,13 +27,17 @@ export default function HomePage() {
 }
 
 async function HomeWithSessionRedirect() {
-  const supabase = await getServerSupabase();
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
+  try {
+    const supabase = await getServerSupabase();
+    const {
+      data: { user }
+    } = await supabase.auth.getUser();
 
-  if (user) {
-    redirect("/dashboard");
+    if (user) {
+      redirect("/dashboard");
+    }
+  } catch {
+    // Se o Supabase falhar, mantemos a home pública em vez de quebrar com 5xx.
   }
 
   return <HomeContent />;
