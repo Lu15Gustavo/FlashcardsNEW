@@ -2,6 +2,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { FlashcardsNavLink } from "@/components/flashcards-nav-link";
+import { UserMenu } from "@/components/user-menu";
+import { getServerSupabase } from "@/lib/supabase-server";
 
 const links = [
   { href: "/", label: "Início" },
@@ -12,7 +14,23 @@ const links = [
 ];
 
 export async function Navbar() {
-  const visibleLinks = links;
+  let isAuthenticated = false;
+  let userEmail = "";
+
+  try {
+    const supabase = await getServerSupabase();
+    const {
+      data: { user }
+    } = await supabase.auth.getUser();
+
+    isAuthenticated = Boolean(user);
+    userEmail = user?.email ?? "";
+  } catch {
+    isAuthenticated = false;
+    userEmail = "";
+  }
+
+  const visibleLinks = isAuthenticated ? links.filter((item) => item.href !== "/auth") : links;
 
   return (
     <header className="sticky top-0 z-10 border-b border-brand-100 bg-white/90 backdrop-blur">
@@ -44,6 +62,7 @@ export async function Navbar() {
               <FlashcardsNavLink />
             </li>
           </ul>
+          {isAuthenticated && userEmail ? <UserMenu email={userEmail} /> : null}
           <ThemeToggle />
         </div>
       </nav>
