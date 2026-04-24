@@ -1,17 +1,18 @@
-import { spawn } from "node:child_process";
+import http from "node:http";
+import next from "next";
 
-const port = process.env.PORT || "3000";
-const args = ["./node_modules/next/dist/bin/next", "start", "-H", "0.0.0.0", "-p", port];
+const host = "0.0.0.0";
+const port = Number(process.env.PORT ?? 8080);
 
-const child = spawn(process.execPath, args, {
-  stdio: "inherit"
+const app = next({ dev: false, hostname: host, port });
+const handle = app.getRequestHandler();
+
+await app.prepare();
+
+const server = http.createServer((req, res) => {
+  void handle(req, res);
 });
 
-child.on("exit", (code, signal) => {
-  if (signal) {
-    process.kill(process.pid, signal);
-    return;
-  }
-
-  process.exit(code ?? 0);
+server.listen(port, host, () => {
+  console.log(`Ready on http://${host}:${port}`);
 });
