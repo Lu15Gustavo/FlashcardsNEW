@@ -386,6 +386,17 @@ export default function StudyPage() {
         </section>
       ) : (
         <>
+          <div className="max-w-2xl w-full mb-3 flex justify-end">
+            <button
+              type="button"
+              className="rounded-lg border border-rose-300/45 bg-rose-500/10 px-3 py-1.5 text-xs font-bold text-rose-700 transition hover:bg-rose-500/20 disabled:opacity-60"
+              onClick={() => void deleteCurrentCard()}
+              disabled={saving || deleting}
+            >
+              {deleting ? "Excluindo..." : "Excluir card"}
+            </button>
+          </div>
+
           <article
             className={`max-w-2xl w-full rounded-3xl border border-brand-100 bg-brand-50 p-8 transition-all duration-200 ${
               answerFx === "correct"
@@ -416,17 +427,6 @@ export default function StudyPage() {
               </div>
               <button type="button" className="btn btn-secondary px-6 py-2 font-semibold shadow-md hover:shadow-lg transition-all" onClick={() => setFlipped((value) => !value)}>
                 {flipped ? "👁️ Ver frente" : "👁️ Ver verso"}
-              </button>
-            </div>
-
-            <div className="mb-4 flex justify-end">
-              <button
-                type="button"
-                className="rounded-lg border border-rose-300/45 bg-rose-500/10 px-3 py-1.5 text-xs font-bold text-rose-700 transition hover:bg-rose-500/20 disabled:opacity-60"
-                onClick={() => void deleteCurrentCard()}
-                disabled={saving || deleting}
-              >
-                {deleting ? "Excluindo..." : "Excluir card"}
               </button>
             </div>
 
