@@ -122,6 +122,41 @@ html.dark .bg-white\/90 {
   background-color: color-mix(in srgb, var(--card-bg) 92%, #ffffff 8%) !important;
 }
 
+html.dark button[class*="bg-white/90"],
+html.dark a[class*="bg-white/90"] {
+  background-color: color-mix(in srgb, var(--card-bg) 90%, #ffffff 10%) !important;
+  color: var(--text) !important;
+  border-color: var(--card-border) !important;
+}
+
+html.dark button[class*="bg-brand-50"],
+html.dark a[class*="bg-brand-50"] {
+  background-color: color-mix(in srgb, var(--muted-bg) 82%, #000000 18%) !important;
+  color: var(--text) !important;
+  border-color: var(--card-border) !important;
+}
+
+html.dark button[class*="bg-brand-50/50"],
+html.dark button[class*="bg-brand-50/10"],
+html.dark a[class*="bg-brand-50/50"],
+html.dark a[class*="bg-brand-50/10"] {
+  background-color: color-mix(in srgb, var(--muted-bg) 75%, #000000 25%) !important;
+  color: var(--text) !important;
+  border-color: var(--card-border) !important;
+}
+
+html.dark button[class*="hover:bg-brand-50"]:hover,
+html.dark a[class*="hover:bg-brand-50"]:hover {
+  background-color: color-mix(in srgb, var(--muted-bg) 90%, #000000 10%) !important;
+}
+
+html.dark button[class*="bg-white/15"],
+html.dark button[class*="bg-white/20"],
+html.dark span[class*="bg-white/15"],
+html.dark span[class*="bg-white/20"] {
+  background-color: color-mix(in srgb, var(--card-bg) 75%, #ffffff 25%) !important;
+}
+
 html.dark .btn-secondary {
   background: color-mix(in srgb, var(--card-bg) 88%, #ffffff 12%);
   color: var(--text);

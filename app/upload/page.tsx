@@ -21,7 +21,9 @@ export default function UploadPage() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [status, setStatus] = useState("");
+  const [statusType, setStatusType] = useState<"info" | "success" | "error">("info");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [generationProgress, setGenerationProgress] = useState(0);
   const [generationMode, setGenerationMode] = useState<GenerationMode>("standard");
   const [fileName, setFileName] = useState("Nenhum arquivo escolhido");
   const [decks, setDecks] = useState<Deck[]>([]);
@@ -29,6 +31,27 @@ export default function UploadPage() {
   const [loadingDecks, setLoadingDecks] = useState(true);
   const [errorDecks, setErrorDecks] = useState("");
   const selectedDeck = selectedDeckId ? decks.find((deck) => deck.id === selectedDeckId) ?? null : null;
+
+  useEffect(() => {
+    if (!isSubmitting) {
+      return;
+    }
+
+    setGenerationProgress(12);
+
+    const timer = window.setInterval(() => {
+      setGenerationProgress((current) => {
+        if (current >= 92) {
+          return 92;
+        }
+
+        const nextStep = current < 40 ? 9 : current < 70 ? 6 : 3;
+        return Math.min(current + nextStep, 92);
+      });
+    }, 220);
+
+    return () => window.clearInterval(timer);
+  }, [isSubmitting]);
 
   useEffect(() => {
     const loadDecks = async () => {
@@ -68,6 +91,7 @@ export default function UploadPage() {
 
     if (!input.files?.[0]) {
       setStatus("Selecione um arquivo PDF.");
+      setStatusType("error");
       return;
     }
 
@@ -80,6 +104,8 @@ export default function UploadPage() {
 
     setIsSubmitting(true);
     setStatus("Processando PDF...");
+    setStatusType("info");
+    setGenerationProgress(12);
 
     try {
       const response = await fetch("/api/upload", {
@@ -89,12 +115,16 @@ export default function UploadPage() {
 
       const data = (await response.json()) as { message: string };
       setStatus(data.message);
+      setStatusType(response.ok ? "success" : "error");
+      setGenerationProgress(response.ok ? 100 : 0);
 
       if (response.ok) {
         router.push("/study");
       }
     } catch {
       setStatus("Erro ao enviar PDF. Tente novamente.");
+      setStatusType("error");
+      setGenerationProgress(0);
     } finally {
       setIsSubmitting(false);
     }
@@ -134,6 +164,7 @@ export default function UploadPage() {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
+                disabled={isSubmitting}
                 className={`flex w-full items-center justify-between gap-4 rounded-3xl border px-5 py-4 text-left shadow-sm transition-all hover:border-brand-500 hover:bg-brand-950/50 ${
                   fileName !== "Nenhum arquivo escolhido"
                     ? "border-brand-500 bg-brand-900/55"
@@ -161,6 +192,9 @@ export default function UploadPage() {
                   {fileName !== "Nenhum arquivo escolhido" ? "Selecionado" : "Arquivo"}
                 </span>
               </button>
+              <p className="mt-2 text-xs text-brand-700/85">
+                Dica: PDFs com pouco texto ou só imagens podem não ter conteúdo suficiente para gerar bons flashcards.
+              </p>
             </div>
 
             <div>
@@ -322,9 +356,52 @@ export default function UploadPage() {
             >
               {isSubmitting ? "Gerando flashcards..." : "Gerar flashcards"}
             </button>
+
+            {isSubmitting ? (
+              <div className="rounded-2xl border border-brand-300 bg-brand-950/35 p-4 shadow-sm">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-black text-white">Gerando flashcards</p>
+                    <p className="text-xs text-white/70">Estamos lendo o PDF e montando os cards. Aguarde só um instante.</p>
+                  </div>
+                  <span className="rounded-full bg-brand-600/20 px-3 py-1 text-xs font-bold text-brand-100">
+                    {generationProgress}%
+                  </span>
+                </div>
+
+                <div className="h-3 w-full overflow-hidden rounded-full bg-brand-950/70 ring-1 ring-brand-300/20">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-emerald-400 via-brand-500 to-cyan-300 transition-all duration-200 ease-out"
+                    style={{ width: `${generationProgress}%` }}
+                    role="progressbar"
+                    aria-valuenow={generationProgress}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-label="Progresso de geração dos flashcards"
+                  />
+                </div>
+
+                <div className="mt-3 flex items-center gap-2 text-xs text-white/65">
+                  <span className="inline-flex h-2.5 w-2.5 animate-pulse rounded-full bg-emerald-400" />
+                  <span>Processamento em andamento...</span>
+                </div>
+              </div>
+            ) : null}
           </form>
 
-          {status && <p className="mt-4 text-sm font-bold text-brand-700">{status}</p>}
+          {status ? (
+            <p
+              className={`mt-4 text-sm font-bold ${
+                statusType === "error"
+                  ? "text-rose-600"
+                  : statusType === "success"
+                    ? "text-emerald-700"
+                    : "text-brand-700"
+              }`}
+            >
+              {status}
+            </p>
+          ) : null}
         </div>
       </section>
     </main>

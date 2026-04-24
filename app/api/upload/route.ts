@@ -8,6 +8,7 @@ import type { Flashcard } from "@/types";
 
 export const dynamic = "force-dynamic";
 const MAX_FLASHCARDS = 15;
+const MIN_FLASHCARDS = 3;
 
 type GenerationMode = "standard" | "easy" | "medium" | "hard";
 
@@ -22,7 +23,7 @@ function getGenerationConfig(mode: GenerationMode) {
     case "standard":
     default:
       return {
-        totalCards: 15,
+        totalCards: MAX_FLASHCARDS,
         knowledgeLevel: "normal" as const,
         prompt: "Crie uma mistura de 5 flashcards fáceis, 5 médios e 5 difíceis."
       };
@@ -112,6 +113,16 @@ export async function POST(request: Request) {
       return { ...card, knowledgeLevel: generationConfig.knowledgeLevel };
     });
     console.log(`[Upload] Total de ${cards.length} cards após fallback (fonte: ${aiCards.length > 0 ? "IA" : "Fallback"})`);
+
+    if (cards.length < MIN_FLASHCARDS) {
+      return NextResponse.json(
+        {
+          message:
+            "Conteúdo insuficiente no PDF para gerar flashcards úteis. Envie um PDF com mais texto corrido (conceitos, explicações e exemplos)."
+        },
+        { status: 422 }
+      );
+    }
 
     if (supabase && user) {
       const { data: documentRow, error: documentError } = await supabase

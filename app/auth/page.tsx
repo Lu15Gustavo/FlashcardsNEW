@@ -1,9 +1,9 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase-client";
 
-type Mode = "login" | "signup" | "forgot";
+type Mode = "login" | "signup" | "forgot" | "reset";
 type MessageVariant = "info" | "signup-success";
 
 export default function AuthPage() {
@@ -11,9 +11,20 @@ export default function AuthPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [message, setMessage] = useState<string>("");
   const [messageVariant, setMessageVariant] = useState<MessageVariant>("info");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const recoveryRequested = params.get("mode") === "reset" || params.get("type") === "recovery";
+
+    if (recoveryRequested) {
+      setMode("reset");
+      setMessage("Defina sua nova senha para concluir a recuperação.");
+    }
+  }, []);
 
   const changeMode = (nextMode: Mode) => {
     setMode(nextMode);
@@ -68,8 +79,28 @@ export default function AuthPage() {
       return;
     }
 
+    if (mode === "reset") {
+      if (newPassword.length < 6) {
+        setMessage("A nova senha precisa ter pelo menos 6 caracteres.");
+        return;
+      }
+
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) {
+        setMessage(error.message);
+        return;
+      }
+
+      setMessage("Senha atualizada com sucesso. Agora você já pode entrar normalmente.");
+      setMode("login");
+      setNewPassword("");
+      setPassword("");
+      setConfirmPassword("");
+      return;
+    }
+
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth`
+      redirectTo: `${window.location.origin}/auth?mode=reset`
     });
     setMessage(error ? error.message : "E-mail de recuperação enviado.");
   };
@@ -103,17 +134,6 @@ export default function AuthPage() {
           >
             Cadastro
           </button>
-          <button
-            className={`rounded-xl border px-4 py-2 text-sm font-black transition-all duration-200 active:scale-[0.98] ${
-              mode === "forgot"
-                ? "border-brand-500 bg-brand-600 text-white shadow-lg shadow-brand-900/30"
-                : "border-brand-300 bg-brand-950/35 text-brand-100 hover:-translate-y-0.5 hover:border-brand-500 hover:bg-brand-900/45"
-            }`}
-            onClick={() => changeMode("forgot")}
-            type="button"
-          >
-            Esqueci minha senha
-          </button>
         </div>
 
         <form onSubmit={submit} className="mt-6 space-y-4">
@@ -140,7 +160,7 @@ export default function AuthPage() {
             />
           </div>
 
-          {mode !== "forgot" && (
+          {mode !== "forgot" && mode !== "reset" && (
             <div>
               <label htmlFor="password" className="mb-1 block text-sm font-bold text-brand-800">
                 Senha
@@ -152,6 +172,30 @@ export default function AuthPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+              />
+              <button
+                type="button"
+                onClick={() => changeMode("forgot")}
+                className="mt-2 inline-flex text-xs font-semibold text-brand-700/85 underline decoration-brand-300 decoration-dotted underline-offset-4 transition hover:text-brand-800"
+              >
+                Esqueci minha senha
+              </button>
+            </div>
+          )}
+
+          {mode === "reset" && (
+            <div>
+              <label htmlFor="newPassword" className="mb-1 block text-sm font-bold text-brand-800">
+                Nova senha
+              </label>
+              <input
+                id="newPassword"
+                className="input"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+                minLength={6}
               />
             </div>
           )}
@@ -176,7 +220,13 @@ export default function AuthPage() {
             type="submit"
             className="w-full rounded-2xl bg-gradient-to-r from-brand-600 to-brand-700 px-6 py-3 font-black text-white shadow-lg shadow-brand-950/25 transition-all duration-200 hover:-translate-y-0.5 hover:from-brand-500 hover:to-brand-600 active:scale-[0.99]"
           >
-            {mode === "login" ? "Entrar" : mode === "signup" ? "Criar conta" : "Enviar recuperação"}
+            {mode === "login"
+              ? "Entrar"
+              : mode === "signup"
+                ? "Criar conta"
+                : mode === "reset"
+                  ? "Atualizar senha"
+                  : "Enviar recuperação"}
           </button>
         </form>
 
