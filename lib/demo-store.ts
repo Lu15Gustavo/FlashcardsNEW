@@ -23,3 +23,9 @@ export function updateCardInStore(cardId: string, updatedCard: Flashcard): Flash
   globalAny.__flashcardsStore!.cards = nextCards;
   return nextCards;
 }
+
+export function removeCardFromStore(cardId: string): Flashcard[] {
+  const nextCards = globalAny.__flashcardsStore!.cards.filter((card) => card.id !== cardId);
+  globalAny.__flashcardsStore!.cards = nextCards;
+  return nextCards;
+}

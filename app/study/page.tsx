@@ -59,6 +59,7 @@ export default function StudyPage() {
   const [studyStarted, setStudyStarted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState("");
   const [flipped, setFlipped] = useState(false);
   const [answerFx, setAnswerFx] = useState<"correct" | "wrong" | null>(null);
@@ -249,6 +250,53 @@ export default function StudyPage() {
     }
   };
 
+  const deleteCurrentCard = async () => {
+    if (!selectedCard) {
+      return;
+    }
+
+    const confirmed = window.confirm("Deseja excluir este flashcard? Essa ação não pode ser desfeita.");
+    if (!confirmed) {
+      return;
+    }
+
+    setDeleting(true);
+    setError("");
+
+    try {
+      const response = await fetch("/api/flashcards/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cardId: selectedCard.id })
+      });
+
+      const data = (await response.json()) as { message?: string };
+      if (!response.ok) {
+        throw new Error(data.message ?? "Não foi possível excluir o flashcard.");
+      }
+
+      const nextCards = cards.filter((card) => card.id !== selectedCard.id);
+      const nextQueue = sessionQueue.filter((card) => card.id !== selectedCard.id);
+
+      setCards(nextCards);
+      setSessionQueue(nextQueue);
+      setWrongCardIds((prev) => prev.filter((cardId) => cardId !== selectedCard.id));
+      setCurrentIndex((prev) => {
+        if (nextQueue.length === 0) {
+          return 0;
+        }
+        return Math.min(prev, nextQueue.length - 1);
+      });
+      setFlipped(false);
+      setAnswerFx(null);
+      setResponseStart(Date.now());
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : "Não foi possível excluir o flashcard.");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
     <main className="page-shell flex min-h-screen flex-col items-center justify-center py-4">
       {error ? (
@@ -371,6 +419,17 @@ export default function StudyPage() {
               </button>
             </div>
 
+            <div className="mb-4 flex justify-end">
+              <button
+                type="button"
+                className="rounded-lg border border-rose-300/45 bg-rose-500/10 px-3 py-1.5 text-xs font-bold text-rose-700 transition hover:bg-rose-500/20 disabled:opacity-60"
+                onClick={() => void deleteCurrentCard()}
+                disabled={saving || deleting}
+              >
+                {deleting ? "Excluindo..." : "Excluir card"}
+              </button>
+            </div>
+
             <p className="mb-3 text-xs font-bold uppercase tracking-wide text-brand-700">
               Rodada {round}{round > 1 ? " - revisão dos cards errados" : ""}
             </p>
@@ -391,7 +450,7 @@ export default function StudyPage() {
                     WebkitBackfaceVisibility: "hidden"
                   }}
                 >
-                  <h2 className="whitespace-pre-line text-4xl font-black leading-tight text-brand-900 min-h-[190px]">
+                  <h2 className="max-h-[50vh] min-h-[190px] overflow-y-auto whitespace-pre-line break-words pr-2 text-[clamp(2rem,4vw,3.2rem)] font-black leading-tight text-brand-900">
                     {getCardFrontText(selectedCard)}
                   </h2>
                 </div>
@@ -404,7 +463,7 @@ export default function StudyPage() {
                     WebkitBackfaceVisibility: "hidden"
                   }}
                 >
-                  <h2 className="whitespace-pre-line text-4xl font-black leading-tight text-brand-900 min-h-[190px]">
+                  <h2 className="max-h-[50vh] min-h-[190px] overflow-y-auto whitespace-pre-line break-words pr-2 text-[clamp(2rem,4vw,3.2rem)] font-black leading-tight text-brand-900">
                     {getCardBackText(selectedCard)}
                   </h2>
                 </div>
@@ -415,9 +474,9 @@ export default function StudyPage() {
           <div className="max-w-2xl w-full mt-8 grid gap-4 grid-cols-4">
             <button
               type="button"
-              className="px-3 py-4 text-sm font-bold rounded-2xl text-white shadow-lg transition-all duration-150 transform hover:scale-[1.02] active:scale-95 disabled:opacity-60 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800"
+              className="rounded-2xl border border-red-300/30 bg-gradient-to-r from-red-500/90 to-rose-500/90 px-3 py-4 text-sm font-bold text-white shadow-[0_10px_24px_rgba(220,38,38,0.22)] transition-all duration-150 hover:-translate-y-0.5 hover:from-red-500 hover:to-rose-500 active:translate-y-0 disabled:opacity-60"
               onClick={() => void reviewCard(1)}
-              disabled={saving}
+              disabled={saving || deleting}
               title="Não conseguiu lembrar ou respondeu errado"
             >
               🔴
@@ -426,9 +485,9 @@ export default function StudyPage() {
             </button>
             <button
               type="button"
-              className="px-3 py-4 text-sm font-bold rounded-2xl text-white shadow-lg transition-all duration-150 transform hover:scale-[1.02] active:scale-95 disabled:opacity-60 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
+              className="rounded-2xl border border-orange-300/30 bg-gradient-to-r from-orange-500/90 to-amber-500/90 px-3 py-4 text-sm font-bold text-white shadow-[0_10px_24px_rgba(249,115,22,0.22)] transition-all duration-150 hover:-translate-y-0.5 hover:from-orange-500 hover:to-amber-500 active:translate-y-0 disabled:opacity-60"
               onClick={() => void reviewCard(2)}
-              disabled={saving}
+              disabled={saving || deleting}
               title="Lembrou com dificuldade"
             >
               🟠
@@ -437,9 +496,9 @@ export default function StudyPage() {
             </button>
             <button
               type="button"
-              className="px-3 py-4 text-sm font-bold rounded-2xl text-white shadow-lg transition-all duration-150 transform hover:scale-[1.02] active:scale-95 disabled:opacity-60 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
+              className="rounded-2xl border border-blue-300/30 bg-gradient-to-r from-blue-500/90 to-indigo-500/90 px-3 py-4 text-sm font-bold text-white shadow-[0_10px_24px_rgba(59,130,246,0.22)] transition-all duration-150 hover:-translate-y-0.5 hover:from-blue-500 hover:to-indigo-500 active:translate-y-0 disabled:opacity-60"
               onClick={() => void reviewCard(4)}
-              disabled={saving}
+              disabled={saving || deleting}
               title="Acertou com hesitação"
             >
               🔵
@@ -448,9 +507,9 @@ export default function StudyPage() {
             </button>
             <button
               type="button"
-              className="px-3 py-4 text-sm font-bold rounded-2xl text-white shadow-lg transition-all duration-150 transform hover:scale-[1.02] active:scale-95 disabled:opacity-60 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700"
+              className="rounded-2xl border border-emerald-300/30 bg-gradient-to-r from-emerald-500/90 to-teal-500/90 px-3 py-4 text-sm font-bold text-white shadow-[0_10px_24px_rgba(16,185,129,0.22)] transition-all duration-150 hover:-translate-y-0.5 hover:from-emerald-500 hover:to-teal-500 active:translate-y-0 disabled:opacity-60"
               onClick={() => void reviewCard(5)}
-              disabled={saving}
+              disabled={saving || deleting}
               title="Respondeu facilmente"
             >
               🟢

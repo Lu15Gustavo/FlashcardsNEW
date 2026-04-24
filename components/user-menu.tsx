@@ -46,19 +46,19 @@ export function UserMenu({ email }: UserMenuProps) {
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
-        className="flex h-10 w-10 items-center justify-center rounded-full border border-brand-100 bg-brand-50 text-sm font-black text-brand-800"
+        className="flex h-10 w-10 items-center justify-center rounded-full border border-brand-300/35 bg-brand-700/25 text-sm font-black text-brand-100 shadow-[0_8px_20px_rgba(31,17,56,0.28)] transition hover:border-brand-300/55 hover:bg-brand-700/35"
         aria-label="Abrir menu do usuário"
       >
         {userInitial}
       </button>
 
       {open ? (
-        <div className="absolute right-0 top-12 z-20 w-56 rounded-2xl border border-brand-100 bg-white/90 p-2 shadow-xl backdrop-blur">
-          <p className="px-3 py-2 text-xs font-bold text-brand-700">{email}</p>
+        <div className="absolute right-0 top-12 z-20 w-56 rounded-2xl border border-brand-300/30 bg-brand-900/85 p-2 shadow-xl backdrop-blur">
+          <p className="px-3 py-2 text-xs font-bold text-brand-100/85">{email}</p>
 
           <Link
             href="/checkout"
-            className="block rounded-xl px-3 py-2 text-sm font-bold text-brand-800 transition hover:bg-brand-50"
+            className="block rounded-xl border border-transparent px-3 py-2 text-sm font-bold text-white/90 transition hover:border-brand-300/30 hover:bg-brand-700/30"
             onClick={() => setOpen(false)}
           >
             Assinaturas
@@ -66,7 +66,7 @@ export function UserMenu({ email }: UserMenuProps) {
 
           <Link
             href="/profile"
-            className="block rounded-xl px-3 py-2 text-sm font-bold text-brand-800 transition hover:bg-brand-50"
+            className="block rounded-xl border border-transparent px-3 py-2 text-sm font-bold text-white/90 transition hover:border-brand-300/30 hover:bg-brand-700/30"
             onClick={() => setOpen(false)}
           >
             Editar perfil
@@ -74,7 +74,7 @@ export function UserMenu({ email }: UserMenuProps) {
 
           <button
             type="button"
-            className="mt-1 w-full rounded-xl px-3 py-2 text-left text-sm font-bold text-brand-800 transition hover:bg-brand-50 disabled:opacity-60"
+            className="mt-1 w-full rounded-xl border border-transparent px-3 py-2 text-left text-sm font-bold text-white/90 transition hover:border-brand-300/30 hover:bg-brand-700/30 disabled:opacity-60"
             onClick={logout}
             disabled={loading}
           >
