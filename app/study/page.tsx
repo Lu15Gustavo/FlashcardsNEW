@@ -45,6 +45,24 @@ function statusLabel(card: Flashcard) {
   return "Normal";
 }
 
+function getCardTextSizeClass(text: string) {
+  const length = text.trim().length;
+
+  if (length > 900) {
+    return "text-[clamp(0.8rem,1.15vw,1rem)] leading-snug";
+  }
+  if (length > 600) {
+    return "text-[clamp(0.88rem,1.35vw,1.2rem)] leading-snug";
+  }
+  if (length > 380) {
+    return "text-[clamp(1rem,1.8vw,1.55rem)] leading-tight";
+  }
+  if (length > 220) {
+    return "text-[clamp(1.15rem,2.2vw,1.95rem)] leading-tight";
+  }
+  return "text-[clamp(1.4rem,3.2vw,3rem)] leading-tight";
+}
+
 export default function StudyPage() {
   const searchParams = useSearchParams();
   const [cards, setCards] = useState<Flashcard[]>([]);
@@ -59,7 +77,7 @@ export default function StudyPage() {
   const [studyStarted, setStudyStarted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
+  const [deletingDocumentId, setDeletingDocumentId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [flipped, setFlipped] = useState(false);
   const [answerFx, setAnswerFx] = useState<"correct" | "wrong" | null>(null);
@@ -175,6 +193,10 @@ export default function StudyPage() {
   };
 
   const selectedCard = sessionQueue[currentIndex] ?? null;
+  const frontText = selectedCard ? getCardFrontText(selectedCard) : "";
+  const backText = selectedCard ? getCardBackText(selectedCard) : "";
+  const frontTextClass = getCardTextSizeClass(frontText);
+  const backTextClass = getCardTextSizeClass(backText);
 
   const reviewCard = async (quality: number) => {
     if (!selectedCard) {
@@ -250,50 +272,34 @@ export default function StudyPage() {
     }
   };
 
-  const deleteCurrentCard = async () => {
-    if (!selectedCard) {
-      return;
-    }
-
-    const confirmed = window.confirm("Deseja excluir este flashcard? Essa ação não pode ser desfeita.");
+  const deleteDocumentCards = async (document: DocumentOption) => {
+    const confirmed = window.confirm(
+      `Deseja excluir todos os ${document.totalCards} flashcards do PDF \"${document.name}\"? Essa ação não pode ser desfeita.`
+    );
     if (!confirmed) {
       return;
     }
 
-    setDeleting(true);
+    setDeletingDocumentId(document.id);
     setError("");
 
     try {
-      const response = await fetch("/api/flashcards/delete", {
+      const response = await fetch("/api/flashcards/delete-by-document", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cardId: selectedCard.id })
+        body: JSON.stringify({ documentId: document.id })
       });
 
       const data = (await response.json()) as { message?: string };
       if (!response.ok) {
-        throw new Error(data.message ?? "Não foi possível excluir o flashcard.");
+        throw new Error(data.message ?? "Não foi possível excluir os flashcards deste PDF.");
       }
 
-      const nextCards = cards.filter((card) => card.id !== selectedCard.id);
-      const nextQueue = sessionQueue.filter((card) => card.id !== selectedCard.id);
-
-      setCards(nextCards);
-      setSessionQueue(nextQueue);
-      setWrongCardIds((prev) => prev.filter((cardId) => cardId !== selectedCard.id));
-      setCurrentIndex((prev) => {
-        if (nextQueue.length === 0) {
-          return 0;
-        }
-        return Math.min(prev, nextQueue.length - 1);
-      });
-      setFlipped(false);
-      setAnswerFx(null);
-      setResponseStart(Date.now());
+      await loadCards();
     } catch (deleteError) {
-      setError(deleteError instanceof Error ? deleteError.message : "Não foi possível excluir o flashcard.");
+      setError(deleteError instanceof Error ? deleteError.message : "Não foi possível excluir os flashcards deste PDF.");
     } finally {
-      setDeleting(false);
+      setDeletingDocumentId(null);
     }
   };
 
@@ -318,15 +324,33 @@ export default function StudyPage() {
 
           <div className="mt-6 grid gap-3">
             {documents.map((document) => (
-              <button
-                key={document.id}
-                type="button"
-                className="w-full rounded-2xl border border-brand-300 bg-brand-950/35 px-5 py-4 text-left text-white transition hover:border-brand-500 hover:bg-brand-950/50"
-                onClick={() => void startWithDocument(document.id)}
-              >
-                <p className="text-base font-bold text-white">{document.name}</p>
-                <p className="text-sm text-white/70">{document.totalCards} flashcard(s)</p>
-              </button>
+              <div key={document.id} className="w-full rounded-2xl border border-brand-300 bg-brand-950/35 px-5 py-4 text-white">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-base font-bold text-white">{document.name}</p>
+                    <p className="text-sm text-white/70">{document.totalCards} flashcard(s)</p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      className="rounded-xl border border-brand-400/50 bg-brand-700/50 px-3 py-2 text-xs font-bold text-white transition hover:bg-brand-700"
+                      onClick={() => void startWithDocument(document.id)}
+                      disabled={deletingDocumentId === document.id}
+                    >
+                      Estudar
+                    </button>
+                    <button
+                      type="button"
+                      className="rounded-xl border border-rose-300/45 bg-rose-500/10 px-3 py-2 text-xs font-bold text-rose-100 transition hover:bg-rose-500/20 disabled:opacity-60"
+                      onClick={() => void deleteDocumentCards(document)}
+                      disabled={deletingDocumentId !== null}
+                    >
+                      {deletingDocumentId === document.id ? "Excluindo..." : "Excluir flashcards"}
+                    </button>
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
         </section>
@@ -344,20 +368,36 @@ export default function StudyPage() {
 
           <div className="mt-6 grid gap-3">
             {documents.map((document) => (
-              <button
-                key={document.id}
-                type="button"
-                className="w-full rounded-2xl border border-brand-300 bg-brand-950/35 px-5 py-4 text-left text-white transition hover:border-brand-500 hover:bg-brand-950/50"
-                onClick={() => void startWithDocument(document.id)}
-              >
+              <div key={document.id} className="w-full rounded-2xl border border-brand-300 bg-brand-950/35 px-5 py-4 text-white">
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <p className="text-sm font-bold text-white">{document.name}</p>
-                  <span className="rounded-full bg-brand-600/20 px-3 py-1 text-xs font-bold text-brand-100">
-                    {document.totalCards} card(s)
-                  </span>
+                  <div>
+                    <p className="text-sm font-bold text-white">{document.name}</p>
+                    <span className="mt-2 inline-flex rounded-full bg-brand-600/20 px-3 py-1 text-xs font-bold text-brand-100">
+                      {document.totalCards} card(s)
+                    </span>
+                    <p className="mt-2 text-sm text-white/70">Clique em Estudar para revisar os flashcards deste PDF.</p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      className="rounded-xl border border-brand-400/50 bg-brand-700/50 px-3 py-2 text-xs font-bold text-white transition hover:bg-brand-700"
+                      onClick={() => void startWithDocument(document.id)}
+                      disabled={deletingDocumentId === document.id}
+                    >
+                      Estudar
+                    </button>
+                    <button
+                      type="button"
+                      className="rounded-xl border border-rose-300/45 bg-rose-500/10 px-3 py-2 text-xs font-bold text-rose-100 transition hover:bg-rose-500/20 disabled:opacity-60"
+                      onClick={() => void deleteDocumentCards(document)}
+                      disabled={deletingDocumentId !== null}
+                    >
+                      {deletingDocumentId === document.id ? "Excluindo..." : "Excluir flashcards"}
+                    </button>
+                  </div>
                 </div>
-                <p className="mt-2 text-sm text-white/70">Clique para estudar os flashcards deste PDF.</p>
-              </button>
+              </div>
             ))}
           </div>
         </section>
@@ -386,17 +426,6 @@ export default function StudyPage() {
         </section>
       ) : (
         <>
-          <div className="max-w-2xl w-full mb-3 flex justify-end">
-            <button
-              type="button"
-              className="rounded-lg border border-rose-300/45 bg-rose-500/10 px-3 py-1.5 text-xs font-bold text-rose-700 transition hover:bg-rose-500/20 disabled:opacity-60"
-              onClick={() => void deleteCurrentCard()}
-              disabled={saving || deleting}
-            >
-              {deleting ? "Excluindo..." : "Excluir card"}
-            </button>
-          </div>
-
           <article
             className={`max-w-2xl w-full rounded-3xl border border-brand-100 bg-brand-50 p-8 transition-all duration-200 ${
               answerFx === "correct"
@@ -450,8 +479,8 @@ export default function StudyPage() {
                     WebkitBackfaceVisibility: "hidden"
                   }}
                 >
-                  <h2 className="max-h-[50vh] min-h-[190px] overflow-y-auto whitespace-pre-line break-words pr-2 text-[clamp(2rem,4vw,3.2rem)] font-black leading-tight text-brand-900">
-                    {getCardFrontText(selectedCard)}
+                  <h2 className={`flex min-h-[240px] items-center whitespace-pre-wrap break-words text-balance font-black text-brand-900 ${frontTextClass}`}>
+                    {frontText}
                   </h2>
                 </div>
 
@@ -463,8 +492,8 @@ export default function StudyPage() {
                     WebkitBackfaceVisibility: "hidden"
                   }}
                 >
-                  <h2 className="max-h-[50vh] min-h-[190px] overflow-y-auto whitespace-pre-line break-words pr-2 text-[clamp(2rem,4vw,3.2rem)] font-black leading-tight text-brand-900">
-                    {getCardBackText(selectedCard)}
+                  <h2 className={`flex min-h-[240px] items-center whitespace-pre-wrap break-words text-balance font-black text-brand-900 ${backTextClass}`}>
+                    {backText}
                   </h2>
                 </div>
               </div>
@@ -476,7 +505,7 @@ export default function StudyPage() {
               type="button"
               className="rounded-2xl border border-red-300/30 bg-gradient-to-r from-red-500/90 to-rose-500/90 px-3 py-4 text-sm font-bold text-white shadow-[0_10px_24px_rgba(220,38,38,0.22)] transition-all duration-150 hover:-translate-y-0.5 hover:from-red-500 hover:to-rose-500 active:translate-y-0 disabled:opacity-60"
               onClick={() => void reviewCard(1)}
-              disabled={saving || deleting}
+              disabled={saving}
               title="Não conseguiu lembrar ou respondeu errado"
             >
               🔴
@@ -487,7 +516,7 @@ export default function StudyPage() {
               type="button"
               className="rounded-2xl border border-orange-300/30 bg-gradient-to-r from-orange-500/90 to-amber-500/90 px-3 py-4 text-sm font-bold text-white shadow-[0_10px_24px_rgba(249,115,22,0.22)] transition-all duration-150 hover:-translate-y-0.5 hover:from-orange-500 hover:to-amber-500 active:translate-y-0 disabled:opacity-60"
               onClick={() => void reviewCard(2)}
-              disabled={saving || deleting}
+              disabled={saving}
               title="Lembrou com dificuldade"
             >
               🟠
@@ -498,7 +527,7 @@ export default function StudyPage() {
               type="button"
               className="rounded-2xl border border-blue-300/30 bg-gradient-to-r from-blue-500/90 to-indigo-500/90 px-3 py-4 text-sm font-bold text-white shadow-[0_10px_24px_rgba(59,130,246,0.22)] transition-all duration-150 hover:-translate-y-0.5 hover:from-blue-500 hover:to-indigo-500 active:translate-y-0 disabled:opacity-60"
               onClick={() => void reviewCard(4)}
-              disabled={saving || deleting}
+              disabled={saving}
               title="Acertou com hesitação"
             >
               🔵
@@ -509,7 +538,7 @@ export default function StudyPage() {
               type="button"
               className="rounded-2xl border border-emerald-300/30 bg-gradient-to-r from-emerald-500/90 to-teal-500/90 px-3 py-4 text-sm font-bold text-white shadow-[0_10px_24px_rgba(16,185,129,0.22)] transition-all duration-150 hover:-translate-y-0.5 hover:from-emerald-500 hover:to-teal-500 active:translate-y-0 disabled:opacity-60"
               onClick={() => void reviewCard(5)}
-              disabled={saving || deleting}
+              disabled={saving}
               title="Respondeu facilmente"
             >
               🟢
