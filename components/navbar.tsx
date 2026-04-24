@@ -30,7 +30,9 @@ export async function Navbar() {
     userEmail = "";
   }
 
-  const visibleLinks = isAuthenticated ? links.filter((item) => item.href !== "/auth") : links;
+  const visibleLinks = isAuthenticated
+    ? links.filter((item) => item.href !== "/" && item.href !== "/auth")
+    : links;
 
   return (
     <header className="sticky top-0 z-10 border-b border-brand-100 bg-white/90 backdrop-blur">

@@ -4,6 +4,7 @@ import { FormEvent, useState } from "react";
 import { supabase } from "@/lib/supabase-client";
 
 type Mode = "login" | "signup" | "forgot";
+type MessageVariant = "info" | "signup-success";
 
 export default function AuthPage() {
   const [mode, setMode] = useState<Mode>("login");
@@ -12,10 +13,18 @@ export default function AuthPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [message, setMessage] = useState<string>("");
+  const [messageVariant, setMessageVariant] = useState<MessageVariant>("info");
+
+  const changeMode = (nextMode: Mode) => {
+    setMode(nextMode);
+    setMessage("");
+    setMessageVariant("info");
+  };
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setMessage("Processando...");
+    setMessageVariant("info");
 
     if (mode === "login") {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -54,7 +63,8 @@ export default function AuthPage() {
         return;
       }
 
-      setMessage("Cadastro enviado. Confira seu e-mail para confirmar e depois faça login.");
+      setMessage("Cadastro bem-sucedido! Basta apenas confirmar o e-mail para liberar o seu acesso.");
+      setMessageVariant("signup-success");
       return;
     }
 
@@ -77,7 +87,7 @@ export default function AuthPage() {
                 ? "border-brand-500 bg-brand-600 text-white shadow-lg shadow-brand-900/30"
                 : "border-brand-300 bg-brand-950/35 text-brand-100 hover:-translate-y-0.5 hover:border-brand-500 hover:bg-brand-900/45"
             }`}
-            onClick={() => setMode("login")}
+            onClick={() => changeMode("login")}
             type="button"
           >
             Login
@@ -88,7 +98,7 @@ export default function AuthPage() {
                 ? "border-brand-500 bg-brand-600 text-white shadow-lg shadow-brand-900/30"
                 : "border-brand-300 bg-brand-950/35 text-brand-100 hover:-translate-y-0.5 hover:border-brand-500 hover:bg-brand-900/45"
             }`}
-            onClick={() => setMode("signup")}
+            onClick={() => changeMode("signup")}
             type="button"
           >
             Cadastro
@@ -99,7 +109,7 @@ export default function AuthPage() {
                 ? "border-brand-500 bg-brand-600 text-white shadow-lg shadow-brand-900/30"
                 : "border-brand-300 bg-brand-950/35 text-brand-100 hover:-translate-y-0.5 hover:border-brand-500 hover:bg-brand-900/45"
             }`}
-            onClick={() => setMode("forgot")}
+            onClick={() => changeMode("forgot")}
             type="button"
           >
             Esqueci minha senha
@@ -170,7 +180,26 @@ export default function AuthPage() {
           </button>
         </form>
 
-        {message && <p className="mt-4 text-sm font-bold text-brand-700">{message}</p>}
+        {messageVariant === "signup-success" ? (
+          <div className="mt-4 rounded-2xl border border-emerald-300 bg-emerald-50/80 p-4 text-emerald-800">
+            <div className="flex items-start gap-3">
+              <div className="relative mt-0.5 h-6 w-6 shrink-0">
+                <span className="absolute inset-0 rounded-full bg-emerald-400/40 animate-ping" />
+                <span className="absolute inset-0 flex items-center justify-center rounded-full bg-emerald-500 text-white shadow-md">
+                  <svg viewBox="0 0 20 20" className="h-4 w-4 fill-current" aria-hidden="true">
+                    <path d="M7.6 13.4 4.7 10.5a1 1 0 1 0-1.4 1.4l3.6 3.6a1 1 0 0 0 1.4 0l8-8a1 1 0 1 0-1.4-1.4l-7.3 7.3Z" />
+                  </svg>
+                </span>
+              </div>
+              <div>
+                <p className="text-sm font-black">Cadastro realizado com sucesso.</p>
+                <p className="mt-1 text-sm font-semibold">{message}</p>
+              </div>
+            </div>
+          </div>
+        ) : message ? (
+          <p className="mt-4 text-sm font-bold text-brand-700">{message}</p>
+        ) : null}
       </section>
     </main>
   );
