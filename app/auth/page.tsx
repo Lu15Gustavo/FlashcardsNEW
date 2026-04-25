@@ -34,6 +34,15 @@ export default function AuthPage() {
   const [message, setMessage] = useState<string>("");
   const [messageVariant, setMessageVariant] = useState<MessageVariant>("info");
   const [showSignupSuccessBanner, setShowSignupSuccessBanner] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  const getFriendlyAuthError = (errorMessage: string) => {
+    if (/rate limit exceeded|email rate limit exceeded|too many requests|over_email_send_limit/i.test(errorMessage)) {
+      return "Você solicitou esse e-mail muitas vezes. Aguarde alguns minutos e tente novamente.";
+    }
+
+    return errorMessage;
+  };
 
   const ensureProfileRecord = async (fallbackName?: string) => {
     try {
@@ -51,89 +60,27 @@ export default function AuthPage() {
   };
 
   useEffect(() => {
-    const showConfirmationSuccess = (isRecovery: boolean) => {
-      if (isRecovery) {
-        setMode("reset");
-        setMessage("Defina sua nova senha para concluir a recuperação.");
-        return;
-      }
-
-      setMode("login");
-      setShowSignupSuccessBanner(true);
-      setMessageVariant("signup-success");
-      setMessage("Email confirmado com sucesso. Agora faça login.");
-    };
-
-    const setupAuthFromUrl = async () => {
+    const setupAuthFromUrl = () => {
       const url = new URL(window.location.href);
       const params = url.searchParams;
       const authType = params.get("type");
-      const recoveryRequested = params.get("mode") === "reset" || authType === "recovery";
-      const signupConfirmed = authType === "signup";
       const tokenHash = params.get("token_hash")?.trim();
       const oauthCode = params.get("code");
       const errorDescription = params.get("error_description")?.trim();
       const errorCode = params.get("error_code")?.trim();
 
-      if (tokenHash && (signupConfirmed || recoveryRequested)) {
-        const { error } = await supabase.auth.verifyOtp({
-          type: recoveryRequested ? "recovery" : "signup",
-          token_hash: tokenHash
-        });
-
-        if (!error) {
-          showConfirmationSuccess(recoveryRequested);
-          return;
-        }
-
-        const { data: tokenSession } = await supabase.auth.getSession();
-        if (tokenSession.session) {
-          showConfirmationSuccess(recoveryRequested);
-          return;
-        }
-      }
-
-      if (oauthCode) {
-        const { error } = await supabase.auth.exchangeCodeForSession(oauthCode);
-        if (!error) {
-          showConfirmationSuccess(recoveryRequested);
-          return;
-        }
-
-        const { data: codeSession } = await supabase.auth.getSession();
-        if (codeSession.session) {
-          showConfirmationSuccess(recoveryRequested);
-          return;
-        }
-
-        setMode("login");
-        setMessage("Não foi possível validar o link de confirmação. Peça um novo e-mail.");
+      // Se houver token_hash, code, error ou type=signup, redirecionar para página de confirmação
+      if (tokenHash || oauthCode || errorDescription || errorCode || authType === "signup") {
+        // Redirecionar para a página de confirmação mantendo todos os parâmetros
+        window.location.assign("/confirmation" + url.search);
         return;
       }
 
-      if (recoveryRequested) {
+      // Se for uma redefinição de senha sem token_hash, mostrar formulário
+      if (params.get("mode") === "reset" && !tokenHash) {
         setMode("reset");
         setMessage("Defina sua nova senha para concluir a recuperação.");
         return;
-      }
-
-      if (signupConfirmed) {
-        setMode("login");
-        setShowSignupSuccessBanner(true);
-        setMessageVariant("signup-success");
-        setMessage("Email confirmado com sucesso. Agora faça login.");
-        return;
-      }
-
-      if (errorCode === "otp_expired") {
-        setMode("login");
-        setMessage("Esse link expirou. Solicite um novo email de confirmação.");
-        return;
-      }
-
-      if (errorDescription) {
-        setMode("login");
-        setMessage(decodeURIComponent(errorDescription));
       }
     };
 
@@ -149,13 +96,19 @@ export default function AuthPage() {
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (submitting) {
+      return;
+    }
+
+    setSubmitting(true);
     setMessage("Processando...");
     setMessageVariant("info");
 
     if (mode === "login") {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
-        setMessage(error.message);
+        setMessage(getFriendlyAuthError(error.message));
+        setSubmitting(false);
         return;
       }
 
@@ -169,6 +122,7 @@ export default function AuthPage() {
     if (mode === "signup") {
       if (password !== confirmPassword) {
         setMessage("A confirmação de senha não confere.");
+        setSubmitting(false);
         return;
       }
 
@@ -179,7 +133,7 @@ export default function AuthPage() {
         password,
         options: {
           data: { name },
-          emailRedirectTo: `${authRedirectBaseUrl}/auth?mode=login&type=signup`
+          emailRedirectTo: `${authRedirectBaseUrl}/confirmation?type=signup`
         }
       });
       if (error) {
@@ -187,10 +141,12 @@ export default function AuthPage() {
           setShowSignupSuccessBanner(false);
           setMessageVariant("info");
           setMessage("Este e-mail já possui uma conta. Faça login ou use Esqueci minha senha.");
+          setSubmitting(false);
           return;
         }
 
-        setMessage(error.message);
+        setMessage(getFriendlyAuthError(error.message));
+        setSubmitting(false);
         return;
       }
 
@@ -198,6 +154,7 @@ export default function AuthPage() {
         setShowSignupSuccessBanner(false);
         setMessageVariant("info");
         setMessage("Este e-mail já possui uma conta. Faça login ou use Esqueci minha senha.");
+        setSubmitting(false);
         return;
       }
 
@@ -214,6 +171,7 @@ export default function AuthPage() {
       setMessageVariant("signup-success");
       setPassword("");
       setConfirmPassword("");
+      setSubmitting(false);
       return;
     }
 
@@ -225,7 +183,8 @@ export default function AuthPage() {
 
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) {
-        setMessage(error.message);
+        setMessage(getFriendlyAuthError(error.message));
+        setSubmitting(false);
         return;
       }
 
@@ -234,14 +193,16 @@ export default function AuthPage() {
       setNewPassword("");
       setPassword("");
       setConfirmPassword("");
+      setSubmitting(false);
       return;
     }
 
     const authRedirectBaseUrl = getAuthRedirectBaseUrl();
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${authRedirectBaseUrl}/auth?mode=reset`
+      redirectTo: `${authRedirectBaseUrl}/confirmation?mode=reset`
     });
-    setMessage(error ? error.message : "E-mail de recuperação enviado.");
+    setMessage(error ? getFriendlyAuthError(error.message) : "E-mail de recuperação enviado.");
+    setSubmitting(false);
   };
 
   return (
@@ -378,6 +339,7 @@ export default function AuthPage() {
 
           <button
             type="submit"
+            disabled={submitting}
             className="w-full rounded-2xl bg-gradient-to-r from-brand-600 to-brand-700 px-6 py-3 font-black text-white shadow-lg shadow-brand-950/25 transition-all duration-200 hover:-translate-y-0.5 hover:from-brand-500 hover:to-brand-600 active:scale-[0.99]"
           >
             {mode === "login"
