@@ -4,7 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase-client";
 
 type Mode = "login" | "signup" | "forgot";
-type MessageVariant = "info" | "signup-success";
+type MessageVariant = "info" | "signup-success" | "error";
 
 function getAuthRedirectBaseUrl() {
   const envUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "").trim();
@@ -34,6 +34,16 @@ export default function AuthPage() {
   const [messageVariant, setMessageVariant] = useState<MessageVariant>("info");
   const [showSignupSuccessBanner, setShowSignupSuccessBanner] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  const setErrorFeedback = (value: string) => {
+    setMessageVariant("error");
+    setMessage(value);
+  };
+
+  const setInfoFeedback = (value: string) => {
+    setMessageVariant("info");
+    setMessage(value);
+  };
 
   const getFriendlyAuthError = (errorMessage: string) => {
     if (/rate limit exceeded|email rate limit exceeded|too many requests|over_email_send_limit/i.test(errorMessage)) {
@@ -100,27 +110,26 @@ export default function AuthPage() {
     }
 
     setSubmitting(true);
-    setMessage("Processando...");
-    setMessageVariant("info");
+    setInfoFeedback("Processando...");
 
     if (mode === "login") {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
-        setMessage(getFriendlyAuthError(error.message));
+        setErrorFeedback(getFriendlyAuthError(error.message));
         setSubmitting(false);
         return;
       }
 
       await ensureProfileRecord();
 
-      setMessage("Login realizado com sucesso. Redirecionando...");
+      setInfoFeedback("Login realizado com sucesso. Redirecionando...");
       window.location.assign("/upload");
       return;
     }
 
     if (mode === "signup") {
       if (password !== confirmPassword) {
-        setMessage("A confirmação de senha não confere.");
+        setErrorFeedback("A confirmação de senha não confere.");
         setSubmitting(false);
         return;
       }
@@ -138,28 +147,26 @@ export default function AuthPage() {
       if (error) {
         if (/already registered|already exists|já está cadastrado/i.test(error.message)) {
           setShowSignupSuccessBanner(false);
-          setMessageVariant("info");
-          setMessage("Este e-mail já possui uma conta. Faça login ou use Esqueci minha senha.");
+          setErrorFeedback("Este e-mail já possui uma conta. Faça login ou use Esqueci minha senha.");
           setSubmitting(false);
           return;
         }
 
-        setMessage(getFriendlyAuthError(error.message));
+        setErrorFeedback(getFriendlyAuthError(error.message));
         setSubmitting(false);
         return;
       }
 
       if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
         setShowSignupSuccessBanner(false);
-        setMessageVariant("info");
-        setMessage("Este e-mail já possui uma conta. Faça login ou use Esqueci minha senha.");
+        setErrorFeedback("Este e-mail já possui uma conta. Faça login ou use Esqueci minha senha.");
         setSubmitting(false);
         return;
       }
 
       if (data.session) {
         await ensureProfileRecord(name);
-        setMessage("Cadastro realizado com sucesso. Redirecionando...");
+        setInfoFeedback("Cadastro realizado com sucesso. Redirecionando...");
         window.location.assign("/upload");
         return;
       }
@@ -174,11 +181,34 @@ export default function AuthPage() {
       return;
     }
 
+    const checkResponse = await fetch("/api/auth/check-account", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email })
+    });
+
+    if (!checkResponse.ok) {
+      setErrorFeedback("Não foi possível validar o e-mail agora. Tente novamente em instantes.");
+      setSubmitting(false);
+      return;
+    }
+
+    const checkData = (await checkResponse.json()) as { exists?: boolean };
+    if (!checkData.exists) {
+      setErrorFeedback("Essa conta não existe. Verifique o e-mail informado.");
+      setSubmitting(false);
+      return;
+    }
+
     const authRedirectBaseUrl = getAuthRedirectBaseUrl();
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${authRedirectBaseUrl}/reset-password?type=recovery`
     });
-    setMessage(error ? getFriendlyAuthError(error.message) : "E-mail de recuperação enviado.");
+    if (error) {
+      setErrorFeedback(getFriendlyAuthError(error.message));
+    } else {
+      setInfoFeedback("E-mail de recuperação enviado.");
+    }
     setSubmitting(false);
   };
 
@@ -311,7 +341,26 @@ export default function AuthPage() {
         </form>
 
         {message && !showSignupSuccessBanner ? (
-          <p className="mt-4 text-sm font-bold text-brand-700">{message}</p>
+          messageVariant === "error" ? (
+            <div className="mt-4 rounded-2xl border border-red-300 bg-gradient-to-r from-red-50 to-rose-50 p-4 text-red-800 shadow-md shadow-red-900/10">
+              <div className="flex items-start gap-3">
+                <div className="relative mt-0.5 h-6 w-6 shrink-0">
+                  <span className="absolute inset-0 rounded-full bg-red-300/35 animate-ping" />
+                  <span className="absolute inset-0 flex items-center justify-center rounded-full bg-red-500 text-white shadow-sm">
+                    <svg viewBox="0 0 20 20" className="h-4 w-4 fill-current" aria-hidden="true">
+                      <path d="M10 1.75a8.25 8.25 0 1 0 0 16.5 8.25 8.25 0 0 0 0-16.5Zm0 11.5a1.125 1.125 0 1 1 0 2.25 1.125 1.125 0 0 1 0-2.25Zm0-8a.75.75 0 0 1 .75.75v5a.75.75 0 0 1-1.5 0v-5a.75.75 0 0 1 .75-.75Z" />
+                    </svg>
+                  </span>
+                </div>
+                <div>
+                  <p className="text-sm font-black">Atenção</p>
+                  <p className="mt-1 text-sm font-semibold">{message}</p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <p className="mt-4 text-sm font-bold text-brand-700">{message}</p>
+          )
         ) : null}
       </section>
     </main>
