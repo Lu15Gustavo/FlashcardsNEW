@@ -45,6 +45,11 @@ export default function ConfirmationPage() {
         const recoveryRequested = params.get("mode") === "reset" || authType === "recovery";
         const signupConfirmed = authType === "signup";
 
+        if (recoveryRequested) {
+          window.location.assign("/reset-password" + url.search);
+          return;
+        }
+
         // Processar token_hash (verifyOtp)
         if (tokenHash && (signupConfirmed || recoveryRequested)) {
           const { error, data } = await supabase.auth.verifyOtp({

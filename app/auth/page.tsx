@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase-client";
 
-type Mode = "login" | "signup" | "forgot" | "reset";
+type Mode = "login" | "signup" | "forgot";
 type MessageVariant = "info" | "signup-success";
 
 function getAuthRedirectBaseUrl() {
@@ -29,7 +29,6 @@ export default function AuthPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [message, setMessage] = useState<string>("");
   const [messageVariant, setMessageVariant] = useState<MessageVariant>("info");
@@ -64,24 +63,24 @@ export default function AuthPage() {
       const url = new URL(window.location.href);
       const params = url.searchParams;
       const authType = params.get("type");
+      const recoveryRequested = params.get("mode") === "reset" || authType === "recovery";
       const tokenHash = params.get("token_hash")?.trim();
       const oauthCode = params.get("code");
       const errorDescription = params.get("error_description")?.trim();
       const errorCode = params.get("error_code")?.trim();
 
-      // Se houver token_hash, code, error ou type=signup, redirecionar para página de confirmação
+      // Para links de recuperação, usar página dedicada de redefinição.
+      if (recoveryRequested && (tokenHash || oauthCode || errorDescription || errorCode || params.get("mode") === "reset")) {
+        window.location.assign("/reset-password" + url.search);
+        return;
+      }
+
+      // Para links de confirmação de cadastro, usar página de confirmação.
       if (tokenHash || oauthCode || errorDescription || errorCode || authType === "signup") {
-        // Redirecionar para a página de confirmação mantendo todos os parâmetros
         window.location.assign("/confirmation" + url.search);
         return;
       }
 
-      // Se for uma redefinição de senha sem token_hash, mostrar formulário
-      if (params.get("mode") === "reset" && !tokenHash) {
-        setMode("reset");
-        setMessage("Defina sua nova senha para concluir a recuperação.");
-        return;
-      }
     };
 
     void setupAuthFromUrl();
@@ -175,31 +174,9 @@ export default function AuthPage() {
       return;
     }
 
-    if (mode === "reset") {
-      if (newPassword.length < 6) {
-        setMessage("A nova senha precisa ter pelo menos 6 caracteres.");
-        return;
-      }
-
-      const { error } = await supabase.auth.updateUser({ password: newPassword });
-      if (error) {
-        setMessage(getFriendlyAuthError(error.message));
-        setSubmitting(false);
-        return;
-      }
-
-      setMessage("Senha atualizada com sucesso. Agora você já pode entrar normalmente.");
-      setMode("login");
-      setNewPassword("");
-      setPassword("");
-      setConfirmPassword("");
-      setSubmitting(false);
-      return;
-    }
-
     const authRedirectBaseUrl = getAuthRedirectBaseUrl();
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${authRedirectBaseUrl}/confirmation?mode=reset`
+      redirectTo: `${authRedirectBaseUrl}/reset-password?type=recovery`
     });
     setMessage(error ? getFriendlyAuthError(error.message) : "E-mail de recuperação enviado.");
     setSubmitting(false);
@@ -279,7 +256,7 @@ export default function AuthPage() {
             />
           </div>
 
-          {mode !== "forgot" && mode !== "reset" && (
+          {mode !== "forgot" && (
             <div>
               <label htmlFor="password" className="mb-1 block text-sm font-bold text-brand-800">
                 Senha
@@ -301,23 +278,6 @@ export default function AuthPage() {
                   Esqueci minha senha
                 </button>
               ) : null}
-            </div>
-          )}
-
-          {mode === "reset" && (
-            <div>
-              <label htmlFor="newPassword" className="mb-1 block text-sm font-bold text-brand-800">
-                Nova senha
-              </label>
-              <input
-                id="newPassword"
-                className="input"
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                required
-                minLength={6}
-              />
             </div>
           )}
 
@@ -346,9 +306,7 @@ export default function AuthPage() {
               ? "Entrar"
               : mode === "signup"
                 ? "Criar conta"
-                : mode === "reset"
-                  ? "Atualizar senha"
-                  : "Enviar recuperação"}
+                : "Enviar recuperação"}
           </button>
         </form>
 
