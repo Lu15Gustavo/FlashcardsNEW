@@ -6,6 +6,24 @@ import { supabase } from "@/lib/supabase-client";
 type Mode = "login" | "signup" | "forgot" | "reset";
 type MessageVariant = "info" | "signup-success";
 
+function getAuthRedirectBaseUrl() {
+  const envUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "").trim();
+  const browserUrl = typeof window !== "undefined" ? window.location.origin : "";
+
+  const envIsLocalhost = /localhost|127\.0\.0\.1/i.test(envUrl);
+  const browserIsLocalhost = /localhost|127\.0\.0\.1/i.test(browserUrl);
+
+  if (browserUrl && !browserIsLocalhost) {
+    return browserUrl.replace(/\/$/, "");
+  }
+
+  if (envUrl && (!envIsLocalhost || !browserUrl)) {
+    return envUrl.replace(/\/$/, "");
+  }
+
+  return (browserUrl || envUrl || "http://localhost:3000").replace(/\/$/, "");
+}
+
 export default function AuthPage() {
   const [mode, setMode] = useState<Mode>("login");
   const [name, setName] = useState("");
@@ -40,6 +58,7 @@ export default function AuthPage() {
       const signupConfirmed = params.get("type") === "signup";
       const oauthCode = params.get("code");
       const errorDescription = params.get("error_description")?.trim();
+      const errorCode = params.get("error_code")?.trim();
 
       if (oauthCode) {
         const { error } = await supabase.auth.exchangeCodeForSession(oauthCode);
@@ -61,6 +80,12 @@ export default function AuthPage() {
         setShowSignupSuccessBanner(true);
         setMessageVariant("signup-success");
         setMessage("Email confirmado com sucesso. Agora faça login.");
+        return;
+      }
+
+      if (errorCode === "otp_expired") {
+        setMode("login");
+        setMessage("Esse link expirou. Solicite um novo email de confirmação.");
         return;
       }
 
@@ -105,12 +130,14 @@ export default function AuthPage() {
         return;
       }
 
+      const authRedirectBaseUrl = getAuthRedirectBaseUrl();
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: { name },
-          emailRedirectTo: `${window.location.origin}/auth?mode=login&type=signup`
+          emailRedirectTo: `${authRedirectBaseUrl}/auth?mode=login&type=signup`
         }
       });
       if (error) {
@@ -161,8 +188,9 @@ export default function AuthPage() {
       return;
     }
 
+    const authRedirectBaseUrl = getAuthRedirectBaseUrl();
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth?mode=reset`
+      redirectTo: `${authRedirectBaseUrl}/auth?mode=reset`
     });
     setMessage(error ? error.message : "E-mail de recuperação enviado.");
   };
