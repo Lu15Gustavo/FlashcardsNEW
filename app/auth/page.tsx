@@ -51,6 +51,19 @@ export default function AuthPage() {
   };
 
   useEffect(() => {
+    const showConfirmationSuccess = (isRecovery: boolean) => {
+      if (isRecovery) {
+        setMode("reset");
+        setMessage("Defina sua nova senha para concluir a recuperação.");
+        return;
+      }
+
+      setMode("login");
+      setShowSignupSuccessBanner(true);
+      setMessageVariant("signup-success");
+      setMessage("Email confirmado com sucesso. Agora faça login.");
+    };
+
     const setupAuthFromUrl = async () => {
       const url = new URL(window.location.href);
       const params = url.searchParams;
@@ -69,15 +82,13 @@ export default function AuthPage() {
         });
 
         if (!error) {
-          if (recoveryRequested) {
-            setMode("reset");
-            setMessage("Defina sua nova senha para concluir a recuperação.");
-          } else {
-            setMode("login");
-            setShowSignupSuccessBanner(true);
-            setMessageVariant("signup-success");
-            setMessage("Email confirmado com sucesso. Agora faça login.");
-          }
+          showConfirmationSuccess(recoveryRequested);
+          return;
+        }
+
+        const { data: tokenSession } = await supabase.auth.getSession();
+        if (tokenSession.session) {
+          showConfirmationSuccess(recoveryRequested);
           return;
         }
       }
@@ -85,15 +96,13 @@ export default function AuthPage() {
       if (oauthCode) {
         const { error } = await supabase.auth.exchangeCodeForSession(oauthCode);
         if (!error) {
-          if (recoveryRequested) {
-            setMode("reset");
-            setMessage("Defina sua nova senha para concluir a recuperação.");
-          } else if (signupConfirmed) {
-            setMode("login");
-            setShowSignupSuccessBanner(true);
-            setMessageVariant("signup-success");
-            setMessage("Email confirmado com sucesso. Agora faça login.");
-          }
+          showConfirmationSuccess(recoveryRequested);
+          return;
+        }
+
+        const { data: codeSession } = await supabase.auth.getSession();
+        if (codeSession.session) {
+          showConfirmationSuccess(recoveryRequested);
           return;
         }
 
