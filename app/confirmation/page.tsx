@@ -12,6 +12,27 @@ export default function ConfirmationPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    const saveProfileData = async (user: any) => {
+      try {
+        // Tentar pegar o nome do metadata do usuário (enviado no signup)
+        const userName = user?.user_metadata?.name ?? "";
+        const userEmail = user?.email ?? "";
+
+        if (userName || userEmail) {
+          await fetch("/api/profile", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name: userName,
+              email: userEmail
+            })
+          });
+        }
+      } catch {
+        // Falha silenciosa - não deve bloquear a confirmação
+      }
+    };
+
     const processConfirmation = async () => {
       try {
         const url = new URL(window.location.href);
@@ -26,12 +47,16 @@ export default function ConfirmationPage() {
 
         // Processar token_hash (verifyOtp)
         if (tokenHash && (signupConfirmed || recoveryRequested)) {
-          const { error } = await supabase.auth.verifyOtp({
+          const { error, data } = await supabase.auth.verifyOtp({
             type: recoveryRequested ? "recovery" : "signup",
             token_hash: tokenHash
           });
 
           if (!error) {
+            // Salvar dados do profile se for signup
+            if (signupConfirmed && data?.user) {
+              await saveProfileData(data.user);
+            }
             setConfirmationType(recoveryRequested ? "recovery" : "signup");
             setIsLoading(false);
             return;
@@ -39,7 +64,8 @@ export default function ConfirmationPage() {
 
           // Fallback: verificar se session existe
           const { data: tokenSession } = await supabase.auth.getSession();
-          if (tokenSession.session) {
+          if (tokenSession.session && signupConfirmed && tokenSession.session.user) {
+            await saveProfileData(tokenSession.session.user);
             setConfirmationType(recoveryRequested ? "recovery" : "signup");
             setIsLoading(false);
             return;
@@ -48,8 +74,12 @@ export default function ConfirmationPage() {
 
         // Processar oauth code
         if (oauthCode) {
-          const { error } = await supabase.auth.exchangeCodeForSession(oauthCode);
+          const { error, data } = await supabase.auth.exchangeCodeForSession(oauthCode);
           if (!error) {
+            // Salvar dados do profile se for signup
+            if (signupConfirmed && data?.user) {
+              await saveProfileData(data.user);
+            }
             setConfirmationType(recoveryRequested ? "recovery" : "signup");
             setIsLoading(false);
             return;
@@ -57,7 +87,8 @@ export default function ConfirmationPage() {
 
           // Fallback: verificar se session existe
           const { data: codeSession } = await supabase.auth.getSession();
-          if (codeSession.session) {
+          if (codeSession.session && signupConfirmed && codeSession.session.user) {
+            await saveProfileData(codeSession.session.user);
             setConfirmationType(recoveryRequested ? "recovery" : "signup");
             setIsLoading(false);
             return;
