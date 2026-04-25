@@ -17,14 +17,60 @@ export default function AuthPage() {
   const [messageVariant, setMessageVariant] = useState<MessageVariant>("info");
   const [showSignupSuccessBanner, setShowSignupSuccessBanner] = useState(false);
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const recoveryRequested = params.get("mode") === "reset" || params.get("type") === "recovery";
-
-    if (recoveryRequested) {
-      setMode("reset");
-      setMessage("Defina sua nova senha para concluir a recuperação.");
+  const ensureProfileRecord = async (fallbackName?: string) => {
+    try {
+      await fetch("/api/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: fallbackName ?? "",
+          email
+        })
+      });
+    } catch {
+      // Não bloqueia login por falha de sincronização do profile.
     }
+  };
+
+  useEffect(() => {
+    const setupAuthFromUrl = async () => {
+      const url = new URL(window.location.href);
+      const params = url.searchParams;
+      const recoveryRequested = params.get("mode") === "reset" || params.get("type") === "recovery";
+      const signupConfirmed = params.get("type") === "signup";
+      const oauthCode = params.get("code");
+      const errorDescription = params.get("error_description")?.trim();
+
+      if (oauthCode) {
+        const { error } = await supabase.auth.exchangeCodeForSession(oauthCode);
+        if (error) {
+          setMode("login");
+          setMessage("Não foi possível validar o link de confirmação. Peça um novo e-mail.");
+          return;
+        }
+      }
+
+      if (recoveryRequested) {
+        setMode("reset");
+        setMessage("Defina sua nova senha para concluir a recuperação.");
+        return;
+      }
+
+      if (signupConfirmed) {
+        setMode("login");
+        setShowSignupSuccessBanner(true);
+        setMessageVariant("signup-success");
+        setMessage("Email confirmado com sucesso. Agora faça login.");
+        return;
+      }
+
+      if (errorDescription) {
+        setMode("login");
+        setMessage(decodeURIComponent(errorDescription));
+      }
+    };
+
+    void setupAuthFromUrl();
   }, []);
 
   const changeMode = (nextMode: Mode) => {
@@ -46,6 +92,8 @@ export default function AuthPage() {
         return;
       }
 
+      await ensureProfileRecord();
+
       setMessage("Login realizado com sucesso. Redirecionando...");
       window.location.assign("/upload");
       return;
@@ -62,15 +110,23 @@ export default function AuthPage() {
         password,
         options: {
           data: { name },
-          emailRedirectTo: `${window.location.origin}/auth?mode=login`
+          emailRedirectTo: `${window.location.origin}/auth?mode=login&type=signup`
         }
       });
       if (error) {
+        if (/already registered|already exists|já está cadastrado/i.test(error.message)) {
+          setShowSignupSuccessBanner(false);
+          setMessageVariant("info");
+          setMessage("Este e-mail já possui uma conta. Faça login ou use Esqueci minha senha.");
+          return;
+        }
+
         setMessage(error.message);
         return;
       }
 
       if (data.session) {
+        await ensureProfileRecord(name);
         setMessage("Cadastro realizado com sucesso. Redirecionando...");
         window.location.assign("/upload");
         return;
