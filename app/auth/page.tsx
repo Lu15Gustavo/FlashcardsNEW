@@ -129,7 +129,7 @@ export default function AuthPage() {
 
     if (mode === "signup") {
       if (password !== confirmPassword) {
-        setErrorFeedback("A confirmação de senha não confere.");
+        setErrorFeedback("As senhas não são iguais.");
         setSubmitting(false);
         return;
       }

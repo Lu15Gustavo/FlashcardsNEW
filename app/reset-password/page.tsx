@@ -110,7 +110,7 @@ export default function ResetPasswordPage() {
     }
 
     if (newPassword !== confirmPassword) {
-      setMessage("A confirmação de senha não confere.");
+      setMessage("As senhas não são iguais.");
       return;
     }
 
