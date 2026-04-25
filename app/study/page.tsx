@@ -46,21 +46,35 @@ function statusLabel(card: Flashcard) {
 }
 
 function getCardTextSizeClass(text: string) {
-  const length = text.trim().length;
+  const normalized = text.replace(/\s+/g, " ").trim();
+  const length = normalized.length;
 
-  if (length > 900) {
-    return "text-[clamp(0.8rem,1.15vw,1rem)] leading-snug";
+  if (length > 1400) {
+    return "text-[clamp(0.62rem,0.95vw,0.78rem)] leading-[1.2]";
   }
-  if (length > 600) {
-    return "text-[clamp(0.88rem,1.35vw,1.2rem)] leading-snug";
+  if (length > 1100) {
+    return "text-[clamp(0.68rem,1.02vw,0.86rem)] leading-[1.22]";
   }
-  if (length > 380) {
-    return "text-[clamp(1rem,1.8vw,1.55rem)] leading-tight";
+  if (length > 850) {
+    return "text-[clamp(0.76rem,1.08vw,0.94rem)] leading-[1.24]";
   }
-  if (length > 220) {
-    return "text-[clamp(1.15rem,2.2vw,1.95rem)] leading-tight";
+  if (length > 650) {
+    return "text-[clamp(0.84rem,1.22vw,1.05rem)] leading-[1.26]";
   }
-  return "text-[clamp(1.4rem,3.2vw,3rem)] leading-tight";
+  if (length > 500) {
+    return "text-[clamp(0.92rem,1.35vw,1.15rem)] leading-[1.28]";
+  }
+  if (length > 360) {
+    return "text-[clamp(1rem,1.55vw,1.28rem)] leading-[1.3]";
+  }
+  if (length > 240) {
+    return "text-[clamp(1.08rem,1.9vw,1.48rem)] leading-tight";
+  }
+  if (length > 120) {
+    return "text-[clamp(1.22rem,2.3vw,1.9rem)] leading-tight";
+  }
+
+  return "text-[clamp(1.32rem,2.7vw,2.2rem)] leading-tight";
 }
 
 export default function StudyPage() {
@@ -466,7 +480,7 @@ export default function StudyPage() {
             <p className="text-sm font-semibold text-brand-600 mb-4 uppercase tracking-wide">{selectedCard.documentName ?? "Sem PDF vinculado"}</p>
             <div className="mb-8" style={{ perspective: "1200px" }}>
               <div
-                className="relative min-h-[190px] w-full transition-transform duration-500"
+                className="relative h-[320px] w-full md:h-[360px] transition-transform duration-500"
                 style={{
                   transformStyle: "preserve-3d",
                   transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)"
@@ -479,7 +493,7 @@ export default function StudyPage() {
                     WebkitBackfaceVisibility: "hidden"
                   }}
                 >
-                  <h2 className={`flex min-h-[240px] items-center whitespace-pre-wrap break-words text-balance font-black text-brand-900 ${frontTextClass}`}>
+                  <h2 className={`flex h-full w-full items-center justify-center overflow-hidden whitespace-pre-wrap break-words text-center font-extrabold text-brand-900 ${frontTextClass}`}>
                     {frontText}
                   </h2>
                 </div>
@@ -492,7 +506,7 @@ export default function StudyPage() {
                     WebkitBackfaceVisibility: "hidden"
                   }}
                 >
-                  <h2 className={`flex min-h-[240px] items-center whitespace-pre-wrap break-words text-balance font-black text-brand-900 ${backTextClass}`}>
+                  <h2 className={`flex h-full w-full items-center justify-center overflow-hidden whitespace-pre-wrap break-words text-center font-extrabold text-brand-900 ${backTextClass}`}>
                     {backText}
                   </h2>
                 </div>

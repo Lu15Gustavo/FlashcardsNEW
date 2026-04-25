@@ -15,6 +15,7 @@ export default function AuthPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [message, setMessage] = useState<string>("");
   const [messageVariant, setMessageVariant] = useState<MessageVariant>("info");
+  const [showSignupSuccessBanner, setShowSignupSuccessBanner] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -30,6 +31,7 @@ export default function AuthPage() {
     setMode(nextMode);
     setMessage("");
     setMessageVariant("info");
+    setShowSignupSuccessBanner(false);
   };
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
@@ -74,8 +76,12 @@ export default function AuthPage() {
         return;
       }
 
-      setMessage("Cadastro bem-sucedido! Basta apenas confirmar o e-mail para liberar o seu acesso.");
+      setMode("login");
+      setShowSignupSuccessBanner(true);
+      setMessage("Cadastro realizado com sucesso. Confirme o e-mail para liberar o acesso.");
       setMessageVariant("signup-success");
+      setPassword("");
+      setConfirmPassword("");
       return;
     }
 
@@ -136,6 +142,25 @@ export default function AuthPage() {
           </button>
         </div>
 
+        {showSignupSuccessBanner ? (
+          <div className="mt-4 rounded-2xl border border-emerald-300 bg-emerald-50/80 p-4 text-emerald-800">
+            <div className="flex items-start gap-3">
+              <div className="relative mt-0.5 h-6 w-6 shrink-0">
+                <span className="absolute inset-0 rounded-full bg-emerald-400/40 animate-ping" />
+                <span className="absolute inset-0 flex items-center justify-center rounded-full bg-emerald-500 text-white shadow-md">
+                  <svg viewBox="0 0 20 20" className="h-4 w-4 fill-current" aria-hidden="true">
+                    <path d="M7.6 13.4 4.7 10.5a1 1 0 1 0-1.4 1.4l3.6 3.6a1 1 0 0 0 1.4 0l8-8a1 1 0 1 0-1.4-1.4l-7.3 7.3Z" />
+                  </svg>
+                </span>
+              </div>
+              <div>
+                <p className="text-sm font-black">Cadastro realizado com sucesso.</p>
+                <p className="mt-1 text-sm font-semibold">Confirme seu e-mail e depois faça login.</p>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
         <form onSubmit={submit} className="mt-6 space-y-4">
           {mode === "signup" && (
             <div>
@@ -173,13 +198,15 @@ export default function AuthPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
-              <button
-                type="button"
-                onClick={() => changeMode("forgot")}
-                className="mt-2 inline-flex text-xs font-semibold text-brand-700/85 underline decoration-brand-300 decoration-dotted underline-offset-4 transition hover:text-brand-800"
-              >
-                Esqueci minha senha
-              </button>
+              {mode === "login" ? (
+                <button
+                  type="button"
+                  onClick={() => changeMode("forgot")}
+                  className="mt-2 inline-flex text-xs font-semibold text-brand-700/85 underline decoration-brand-300 decoration-dotted underline-offset-4 transition hover:text-brand-800"
+                >
+                  Esqueci minha senha
+                </button>
+              ) : null}
             </div>
           )}
 
@@ -230,24 +257,7 @@ export default function AuthPage() {
           </button>
         </form>
 
-        {messageVariant === "signup-success" ? (
-          <div className="mt-4 rounded-2xl border border-emerald-300 bg-emerald-50/80 p-4 text-emerald-800">
-            <div className="flex items-start gap-3">
-              <div className="relative mt-0.5 h-6 w-6 shrink-0">
-                <span className="absolute inset-0 rounded-full bg-emerald-400/40 animate-ping" />
-                <span className="absolute inset-0 flex items-center justify-center rounded-full bg-emerald-500 text-white shadow-md">
-                  <svg viewBox="0 0 20 20" className="h-4 w-4 fill-current" aria-hidden="true">
-                    <path d="M7.6 13.4 4.7 10.5a1 1 0 1 0-1.4 1.4l3.6 3.6a1 1 0 0 0 1.4 0l8-8a1 1 0 1 0-1.4-1.4l-7.3 7.3Z" />
-                  </svg>
-                </span>
-              </div>
-              <div>
-                <p className="text-sm font-black">Cadastro realizado com sucesso.</p>
-                <p className="mt-1 text-sm font-semibold">{message}</p>
-              </div>
-            </div>
-          </div>
-        ) : message ? (
+        {message && !showSignupSuccessBanner ? (
           <p className="mt-4 text-sm font-bold text-brand-700">{message}</p>
         ) : null}
       </section>
