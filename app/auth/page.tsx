@@ -54,19 +54,52 @@ export default function AuthPage() {
     const setupAuthFromUrl = async () => {
       const url = new URL(window.location.href);
       const params = url.searchParams;
-      const recoveryRequested = params.get("mode") === "reset" || params.get("type") === "recovery";
-      const signupConfirmed = params.get("type") === "signup";
+      const authType = params.get("type");
+      const recoveryRequested = params.get("mode") === "reset" || authType === "recovery";
+      const signupConfirmed = authType === "signup";
+      const tokenHash = params.get("token_hash")?.trim();
       const oauthCode = params.get("code");
       const errorDescription = params.get("error_description")?.trim();
       const errorCode = params.get("error_code")?.trim();
 
-      if (oauthCode) {
-        const { error } = await supabase.auth.exchangeCodeForSession(oauthCode);
-        if (error) {
-          setMode("login");
-          setMessage("Não foi possível validar o link de confirmação. Peça um novo e-mail.");
+      if (tokenHash && (signupConfirmed || recoveryRequested)) {
+        const { error } = await supabase.auth.verifyOtp({
+          type: recoveryRequested ? "recovery" : "signup",
+          token_hash: tokenHash
+        });
+
+        if (!error) {
+          if (recoveryRequested) {
+            setMode("reset");
+            setMessage("Defina sua nova senha para concluir a recuperação.");
+          } else {
+            setMode("login");
+            setShowSignupSuccessBanner(true);
+            setMessageVariant("signup-success");
+            setMessage("Email confirmado com sucesso. Agora faça login.");
+          }
           return;
         }
+      }
+
+      if (oauthCode) {
+        const { error } = await supabase.auth.exchangeCodeForSession(oauthCode);
+        if (!error) {
+          if (recoveryRequested) {
+            setMode("reset");
+            setMessage("Defina sua nova senha para concluir a recuperação.");
+          } else if (signupConfirmed) {
+            setMode("login");
+            setShowSignupSuccessBanner(true);
+            setMessageVariant("signup-success");
+            setMessage("Email confirmado com sucesso. Agora faça login.");
+          }
+          return;
+        }
+
+        setMode("login");
+        setMessage("Não foi possível validar o link de confirmação. Peça um novo e-mail.");
+        return;
       }
 
       if (recoveryRequested) {
@@ -149,6 +182,13 @@ export default function AuthPage() {
         }
 
         setMessage(error.message);
+        return;
+      }
+
+      if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+        setShowSignupSuccessBanner(false);
+        setMessageVariant("info");
+        setMessage("Este e-mail já possui uma conta. Faça login ou use Esqueci minha senha.");
         return;
       }
 
