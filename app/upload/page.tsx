@@ -214,12 +214,15 @@ export default function UploadPage() {
                 <p className="text-xs text-rose-600">{errorDecks}</p>
               ) : decks.length === 0 ? (
                 <div className="rounded-2xl border border-brand-200 bg-brand-50/50 p-4">
-                  <p className="text-sm text-brand-700">
-                    Você ainda não criou nenhum Deck.{" "}
-                    <a href="/decks" className="font-bold underline hover:text-brand-900">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p className="text-sm text-brand-700">Você ainda não criou nenhum Deck.</p>
+                    <a
+                      href="/decks"
+                      className="inline-flex items-center rounded-xl bg-gradient-to-r from-brand-600 to-brand-700 px-4 py-2 text-sm font-black text-white shadow-lg shadow-brand-950/25 transition-all duration-200 hover:-translate-y-0.5 hover:from-brand-500 hover:to-brand-600"
+                    >
                       Criar um agora
                     </a>
-                  </p>
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-3">

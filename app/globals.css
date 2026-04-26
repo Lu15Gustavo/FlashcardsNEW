@@ -78,11 +78,19 @@ a {
   padding: 0.72rem 1.2rem;
   font-weight: 700;
   cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
 }
 
 .btn-primary {
-  background: var(--brand);
+  background: linear-gradient(90deg, #7824f0 0%, #651bc8 100%);
   color: #fff;
+  box-shadow: 0 10px 26px rgba(120, 36, 240, 0.28);
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+  box-shadow: 0 14px 30px rgba(120, 36, 240, 0.34);
 }
 
 .btn-secondary {

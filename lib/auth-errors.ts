@@ -23,8 +23,8 @@ export function mapAuthErrorMessage(errorMessage: string, context: AuthErrorCont
     return "E-mail ou senha inválidos. Verifique os dados e tente novamente.";
   }
 
-  if (/email not confirmed|confirm your email|email_not_confirmed/.test(normalized)) {
-    return "Seu e-mail ainda não foi confirmado. Verifique sua caixa de entrada.";
+  if (/email not confirmed|confirm your email|email_not_confirmed|not_confirmed|unconfirmed/.test(normalized)) {
+    return "Ainda precisa confirma a conta";
   }
 
   if (/already registered|already exists|user already registered|já está cadastrado/.test(normalized)) {
