@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase-client";
+import { mapAuthErrorMessage } from "@/lib/auth-errors";
 
 type PageState = "loading" | "ready" | "success" | "error";
 
@@ -26,13 +27,13 @@ export default function ResetPasswordPage() {
 
         if (errorCode === "otp_expired") {
           setPageState("error");
-          setMessage("Esse link de redefinição expirou. Solicite um novo e-mail.");
+          setMessage(mapAuthErrorMessage(errorCode, "reset"));
           return;
         }
 
         if (errorDescription) {
           setPageState("error");
-          setMessage(decodeURIComponent(errorDescription));
+          setMessage(mapAuthErrorMessage(errorDescription, "reset"));
           return;
         }
 
@@ -56,7 +57,7 @@ export default function ResetPasswordPage() {
           }
 
           setPageState("error");
-          setMessage("Não foi possível validar o link de redefinição. Solicite um novo e-mail.");
+          setMessage(mapAuthErrorMessage(error.message || "invalid token", "reset"));
           return;
         }
 
@@ -76,7 +77,7 @@ export default function ResetPasswordPage() {
           }
 
           setPageState("error");
-          setMessage("Não foi possível validar o link de redefinição. Solicite um novo e-mail.");
+          setMessage(mapAuthErrorMessage(error.message || "invalid token", "reset"));
           return;
         }
 
@@ -91,7 +92,7 @@ export default function ResetPasswordPage() {
         setMessage("Link inválido de redefinição. Solicite um novo e-mail.");
       } catch {
         setPageState("error");
-        setMessage("Erro ao processar link de redefinição. Tente novamente.");
+        setMessage(mapAuthErrorMessage("Erro ao processar link de redefinição", "reset"));
       }
     };
 
@@ -120,7 +121,7 @@ export default function ResetPasswordPage() {
     const { error } = await supabase.auth.updateUser({ password: newPassword });
     if (error) {
       setSubmitting(false);
-      setMessage(error.message || "Não foi possível atualizar a senha.");
+      setMessage(mapAuthErrorMessage(error.message || "reset error", "reset"));
       return;
     }
 

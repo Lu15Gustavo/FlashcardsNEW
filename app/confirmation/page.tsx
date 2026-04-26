@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase-client";
+import { mapAuthErrorMessage } from "@/lib/auth-errors";
 
 type ConfirmationType = "signup" | "error";
 
@@ -103,14 +104,14 @@ export default function ConfirmationPage() {
         // Processar erros
         if (errorCode === "otp_expired") {
           setConfirmationType("error");
-          setErrorMessage("Esse link expirou. Solicite um novo email de confirmação.");
+          setErrorMessage(mapAuthErrorMessage(errorCode, "confirmation"));
           setIsLoading(false);
           return;
         }
 
         if (errorDescription) {
           setConfirmationType("error");
-          setErrorMessage(decodeURIComponent(errorDescription));
+          setErrorMessage(mapAuthErrorMessage(errorDescription, "confirmation"));
           setIsLoading(false);
           return;
         }
@@ -120,7 +121,7 @@ export default function ConfirmationPage() {
         setIsLoading(false);
       } catch {
         setConfirmationType("error");
-        setErrorMessage("Ocorreu um erro ao processar sua confirmação.");
+        setErrorMessage(mapAuthErrorMessage("confirmation error", "confirmation"));
         setIsLoading(false);
       }
     };

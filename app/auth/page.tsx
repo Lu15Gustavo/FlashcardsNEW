@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase-client";
+import { mapAuthErrorMessage } from "@/lib/auth-errors";
 
 type Mode = "login" | "signup" | "forgot";
 type MessageVariant = "info" | "signup-success" | "error";
@@ -43,14 +44,6 @@ export default function AuthPage() {
   const setInfoFeedback = (value: string) => {
     setMessageVariant("info");
     setMessage(value);
-  };
-
-  const getFriendlyAuthError = (errorMessage: string) => {
-    if (/rate limit exceeded|email rate limit exceeded|too many requests|over_email_send_limit/i.test(errorMessage)) {
-      return "Você solicitou esse e-mail muitas vezes. Aguarde alguns minutos e tente novamente.";
-    }
-
-    return errorMessage;
   };
 
   const ensureProfileRecord = async (fallbackName?: string) => {
@@ -115,7 +108,7 @@ export default function AuthPage() {
     if (mode === "login") {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
-        setErrorFeedback(getFriendlyAuthError(error.message));
+        setErrorFeedback(mapAuthErrorMessage(error.message, "login"));
         setSubmitting(false);
         return;
       }
@@ -145,14 +138,8 @@ export default function AuthPage() {
         }
       });
       if (error) {
-        if (/already registered|already exists|já está cadastrado/i.test(error.message)) {
-          setShowSignupSuccessBanner(false);
-          setErrorFeedback("Este e-mail já possui uma conta. Faça login ou use Esqueci minha senha.");
-          setSubmitting(false);
-          return;
-        }
-
-        setErrorFeedback(getFriendlyAuthError(error.message));
+        setShowSignupSuccessBanner(false);
+        setErrorFeedback(mapAuthErrorMessage(error.message, "signup"));
         setSubmitting(false);
         return;
       }
@@ -205,7 +192,7 @@ export default function AuthPage() {
       redirectTo: `${authRedirectBaseUrl}/reset-password?type=recovery`
     });
     if (error) {
-      setErrorFeedback(getFriendlyAuthError(error.message));
+      setErrorFeedback(mapAuthErrorMessage(error.message, "forgot"));
     } else {
       setInfoFeedback("E-mail de recuperação enviado.");
     }
