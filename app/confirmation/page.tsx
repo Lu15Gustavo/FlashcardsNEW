@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase-client";
 
-type ConfirmationType = "signup" | "recovery" | "error";
+type ConfirmationType = "signup" | "error";
 
 export default function ConfirmationPage() {
   const [confirmationType, setConfirmationType] = useState<ConfirmationType>("signup");
@@ -51,9 +51,9 @@ export default function ConfirmationPage() {
         }
 
         // Processar token_hash (verifyOtp)
-        if (tokenHash && (signupConfirmed || recoveryRequested)) {
+        if (tokenHash && signupConfirmed) {
           const { error, data } = await supabase.auth.verifyOtp({
-            type: recoveryRequested ? "recovery" : "signup",
+            type: "signup",
             token_hash: tokenHash
           });
 
@@ -62,7 +62,7 @@ export default function ConfirmationPage() {
             if (signupConfirmed && data?.user) {
               await saveProfileData(data.user);
             }
-            setConfirmationType(recoveryRequested ? "recovery" : "signup");
+            setConfirmationType("signup");
             setIsLoading(false);
             return;
           }
@@ -71,7 +71,7 @@ export default function ConfirmationPage() {
           const { data: tokenSession } = await supabase.auth.getSession();
           if (tokenSession.session && signupConfirmed && tokenSession.session.user) {
             await saveProfileData(tokenSession.session.user);
-            setConfirmationType(recoveryRequested ? "recovery" : "signup");
+            setConfirmationType("signup");
             setIsLoading(false);
             return;
           }
@@ -85,7 +85,7 @@ export default function ConfirmationPage() {
             if (signupConfirmed && data?.user) {
               await saveProfileData(data.user);
             }
-            setConfirmationType(recoveryRequested ? "recovery" : "signup");
+            setConfirmationType("signup");
             setIsLoading(false);
             return;
           }
@@ -94,7 +94,7 @@ export default function ConfirmationPage() {
           const { data: codeSession } = await supabase.auth.getSession();
           if (codeSession.session && signupConfirmed && codeSession.session.user) {
             await saveProfileData(codeSession.session.user);
-            setConfirmationType(recoveryRequested ? "recovery" : "signup");
+            setConfirmationType("signup");
             setIsLoading(false);
             return;
           }
@@ -163,32 +163,6 @@ export default function ConfirmationPage() {
                 className="mt-6 inline-flex items-center rounded-lg bg-red-600 px-6 py-3 font-black text-white transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-red-900/30 active:scale-[0.98]"
               >
                 Voltar para Login
-              </Link>
-            </div>
-          </div>
-        </section>
-      </main>
-    );
-  }
-
-  if (confirmationType === "recovery") {
-    return (
-      <main className="page-shell py-14">
-        <section className="mx-auto w-full max-w-lg card p-8">
-          <div className="flex items-start gap-4">
-            <div className="relative h-12 w-12 shrink-0 flex-col items-center justify-center rounded-full bg-blue-100">
-              <svg className="h-6 w-6 text-blue-600" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                <path d="M8.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
-              </svg>
-            </div>
-            <div className="flex-1">
-              <h1 className="text-2xl font-black text-blue-600">Recuperação de Senha</h1>
-              <p className="mt-2 text-brand-900/80">Acesse a página de redefinição de senha para criar uma nova senha e continuar.</p>
-              <Link
-                href="/auth?mode=reset"
-                className="mt-6 inline-flex items-center rounded-lg bg-blue-600 px-6 py-3 font-black text-white transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-900/30 active:scale-[0.98]"
-              >
-                Definir Nova Senha
               </Link>
             </div>
           </div>

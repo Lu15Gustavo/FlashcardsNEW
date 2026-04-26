@@ -30,15 +30,18 @@ export async function POST(request: Request) {
     const name = String(body.name ?? "").trim().slice(0, 120);
     const email = String(body.email ?? user.email ?? "").trim().toLowerCase().slice(0, 320);
 
-    const { error } = await supabase.from("profiles").upsert(
-      {
-        id: user.id,
-        email,
-        name,
-        plan: "basic"
-      },
-      { onConflict: "id" }
-    );
+    const profilePayload: { id: string; email: string; plan: string; name?: string } = {
+      id: user.id,
+      email,
+      plan: "basic"
+    };
+
+    // Evita apagar o nome existente quando a requisição vier sem nome.
+    if (name) {
+      profilePayload.name = name;
+    }
+
+    const { error } = await supabase.from("profiles").upsert(profilePayload, { onConflict: "id" });
 
     if (error) {
       return NextResponse.json({ message: "Erro ao atualizar perfil." }, { status: 500 });
