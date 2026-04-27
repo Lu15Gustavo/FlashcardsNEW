@@ -39,18 +39,18 @@ export default function UploadPage() {
       return;
     }
 
-    setGenerationProgress(12);
+    setGenerationProgress(10);
 
     const timer = window.setInterval(() => {
       setGenerationProgress((current) => {
-        if (current >= 92) {
-          return 92;
+        if (current >= 96) {
+          return 96;
         }
 
-        const nextStep = current < 40 ? 9 : current < 70 ? 6 : 3;
-        return Math.min(current + nextStep, 92);
+        const nextStep = current < 35 ? 10 : current < 65 ? 6 : current < 86 ? 3 : 1;
+        return Math.min(current + nextStep, 96);
       });
-    }, 220);
+    }, 170);
 
     return () => window.clearInterval(timer);
   }, [isSubmitting]);
@@ -113,7 +113,7 @@ export default function UploadPage() {
     setIsSubmitting(true);
     setStatus("Processando PDF...");
     setStatusType("info");
-    setGenerationProgress(12);
+    setGenerationProgress(10);
 
     try {
       const response = await fetch("/api/upload", {
@@ -390,20 +390,26 @@ export default function UploadPage() {
                 </div>
 
                 <div className="h-3 w-full overflow-hidden rounded-full bg-brand-950/70 ring-1 ring-brand-300/20">
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-emerald-400 via-brand-500 to-cyan-300 transition-all duration-200 ease-out"
-                    style={{ width: `${generationProgress}%` }}
-                    role="progressbar"
-                    aria-valuenow={generationProgress}
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                    aria-label="Progresso de geração dos flashcards"
-                  />
+                    <div className="relative h-full w-full overflow-hidden rounded-full">
+                      <div
+                        className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-emerald-400 via-brand-500 to-cyan-300 transition-[width] duration-300 ease-out"
+                        style={{ width: `${generationProgress}%` }}
+                        role="progressbar"
+                        aria-valuenow={generationProgress}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-label="Progresso de geração dos flashcards"
+                      />
+
+                      {isSubmitting ? (
+                        <div className="pointer-events-none absolute inset-y-0 left-0 w-1/3 animate-upload-shimmer rounded-full bg-gradient-to-r from-transparent via-white/35 to-transparent" />
+                      ) : null}
+                    </div>
                 </div>
 
                 <div className="mt-3 flex items-center gap-2 text-xs text-white/65">
-                  <span className="inline-flex h-2.5 w-2.5 animate-pulse rounded-full bg-emerald-400" />
-                  <span>Processamento em andamento...</span>
+                    <span className="inline-flex h-2.5 w-2.5 animate-pulse rounded-full bg-emerald-400" />
+                    <span>Processando PDF e montando os flashcards...</span>
                 </div>
               </div>
             ) : null}
