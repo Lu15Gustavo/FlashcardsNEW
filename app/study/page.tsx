@@ -412,7 +412,7 @@ export default function StudyPage() {
 
   return (
     <main className="page-shell flex min-h-screen flex-col items-center justify-center py-4">
-      {!loading && !error ? (
+      {!loading && !error && !emptyDeckStudy ? (
         <section className="mb-5 w-full max-w-3xl rounded-3xl border border-brand-300/35 bg-brand-950/45 p-4 shadow-[0_18px_40px_rgba(15,10,31,0.28)] backdrop-blur-sm">
           <p className="text-xs font-black uppercase tracking-wide text-brand-100/90">Modo de estudo</p>
           <div className="mt-3 grid gap-2 md:grid-cols-3">
@@ -502,9 +502,9 @@ export default function StudyPage() {
           </div>
         </section>
       ) : emptyDeckStudy ? (
-        <section className="max-w-2xl w-full rounded-3xl border border-rose-300/40 bg-gradient-to-br from-rose-50 to-brand-50 p-8 text-center shadow-lg shadow-rose-900/10">
-          <p className="text-2xl font-black text-rose-700">Este deck ainda não tem flashcards.</p>
-          <p className="mt-3 text-sm font-semibold text-brand-800/90">
+        <section className="max-w-2xl w-full rounded-3xl border border-rose-300/35 bg-gradient-to-br from-rose-950/45 via-brand-950/70 to-brand-900/55 p-8 text-center shadow-[0_18px_45px_rgba(127,29,29,0.18)] backdrop-blur-sm">
+          <p className="text-2xl font-black text-rose-100">Este deck ainda não tem flashcards.</p>
+          <p className="mt-3 text-sm font-semibold text-white/75">
             Adicione PDFs para começar a estudar esse deck.
           </p>
           <button
