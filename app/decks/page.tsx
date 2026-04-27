@@ -61,6 +61,7 @@ export default function DecksPage() {
   const [savingCards, setSavingCards] = useState(false);
   const [selectedGroupKeys, setSelectedGroupKeys] = useState<string[]>([]);
   const [cardsFeedback, setCardsFeedback] = useState("");
+  const [showAddCardsHint, setShowAddCardsHint] = useState(false);
 
   const deckCardGroups = useMemo(() => groupCardsByDocument(deckCards), [deckCards]);
   const availableCardGroups = useMemo(() => groupCardsByDocument(availableCards), [availableCards]);
@@ -234,6 +235,7 @@ export default function DecksPage() {
     setLoadingCards(true);
     setCardsFeedback("");
     setSelectedGroupKeys([]);
+    setShowAddCardsHint(false);
 
     try {
       const response = await fetch("/api/flashcards/list", { cache: "no-store" });
@@ -246,6 +248,10 @@ export default function DecksPage() {
       const allCards = Array.isArray(data.cards) ? data.cards : [];
       setDeckCards(allCards.filter((card) => card.deckId === deck.id));
       setAvailableCards(allCards.filter((card) => card.deckId !== deck.id));
+
+      if (allCards.filter((card) => card.deckId === deck.id).length === 0) {
+        setShowAddCardsHint(true);
+      }
     } catch (err) {
       setCardsFeedback(err instanceof Error ? err.message : "Erro ao carregar flashcards.");
       setAvailableCards([]);
@@ -298,6 +304,13 @@ export default function DecksPage() {
       setCardsFeedback(err instanceof Error ? err.message : "Erro ao adicionar flashcards ao Deck.");
     } finally {
       setSavingCards(false);
+    }
+  };
+
+  const scrollToAvailableCards = () => {
+    const element = document.getElementById("available-cards-area");
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   };
 
@@ -497,7 +510,22 @@ export default function DecksPage() {
                   </div>
 
                   {deckCards.length === 0 ? (
-                    <p className="text-sm text-white/70">Este Deck ainda não possui flashcards.</p>
+                    <div className="rounded-2xl border border-dashed border-brand-300/70 bg-brand-950/25 p-4 text-center">
+                      <p className="text-sm font-bold text-white">Este Deck ainda não possui flashcards.</p>
+                      <p className="mt-2 text-sm text-white/70">
+                        Adicione cards agora para começar a estudar esse Deck.
+                      </p>
+                      <button
+                        type="button"
+                        className="mt-4 rounded-xl bg-gradient-to-r from-brand-600 to-brand-700 px-4 py-2 text-sm font-black text-white shadow-lg shadow-brand-950/25 transition-all duration-200 hover:-translate-y-0.5 hover:from-brand-500 hover:to-brand-600"
+                        onClick={() => {
+                          setShowAddCardsHint(true);
+                          scrollToAvailableCards();
+                        }}
+                      >
+                        Ir para adicionar cards
+                      </button>
+                    </div>
                   ) : (
                     <div className="grid gap-3">
                       {deckCardGroups.map((group) => (
@@ -524,6 +552,13 @@ export default function DecksPage() {
                     </div>
                   )}
                 </div>
+
+                <div id="available-cards-area">
+                {showAddCardsHint ? (
+                  <div className="mb-4 rounded-2xl border border-brand-300/40 bg-brand-900/25 p-4 text-sm text-white/80">
+                    Você pode selecionar um ou mais PDFs abaixo para adicionar cards a este Deck.
+                  </div>
+                ) : null}
 
                 {availableCardGroups.length === 0 ? (
                   <p className="text-sm text-white/70">Nenhum flashcard disponível para adicionar neste Deck.</p>
@@ -607,6 +642,7 @@ export default function DecksPage() {
                 </div>
                   </>
                 )}
+                </div>
               </>
             )}
           </section>
@@ -624,6 +660,7 @@ export default function DecksPage() {
                 setDeckCards([]);
                 setSelectedGroupKeys([]);
                 setCardsFeedback("");
+                setShowAddCardsHint(false);
               }}
             >
               Voltar para a lista
