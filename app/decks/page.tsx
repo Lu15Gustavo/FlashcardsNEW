@@ -103,6 +103,18 @@ export default function DecksPage() {
     void loadDecks();
   }, []);
 
+  useEffect(() => {
+    if (decks.length === 0) return;
+
+    const deckIdToAdd = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("deckIdToAdd") : null;
+    if (!deckIdToAdd) return;
+
+    const deckToAdd = decks.find((deck) => deck.id === deckIdToAdd);
+    if (deckToAdd) {
+      void loadCardsForDeck(deckToAdd);
+    }
+  }, [decks]);
+
   const resetForm = () => {
     setFormMode("idle");
     setEditingDeck(null);

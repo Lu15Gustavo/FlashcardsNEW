@@ -510,7 +510,7 @@ export default function StudyPage() {
           <button
             type="button"
             className="mt-6 inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-brand-600 to-brand-700 px-6 py-3 text-sm font-black text-white shadow-lg shadow-brand-950/20 transition-all duration-200 hover:-translate-y-0.5 hover:from-brand-500 hover:to-brand-600 active:scale-[0.98]"
-            onClick={() => window.location.assign(`/upload?deckId=${activeDeckId}`)}
+            onClick={() => window.location.assign(`/decks?deckIdToAdd=${activeDeckId}`)}
           >
             Adicionar PDFs
           </button>
