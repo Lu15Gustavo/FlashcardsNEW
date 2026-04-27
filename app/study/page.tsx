@@ -517,47 +517,43 @@ export default function StudyPage() {
           <div className="max-w-2xl w-full mt-8 grid gap-4 grid-cols-4">
             <button
               type="button"
-              className="rounded-2xl border border-red-300/30 bg-gradient-to-r from-red-500/90 to-rose-500/90 px-3 py-4 text-sm font-bold text-white shadow-[0_10px_24px_rgba(220,38,38,0.22)] transition-all duration-150 hover:-translate-y-0.5 hover:from-red-500 hover:to-rose-500 active:translate-y-0 disabled:opacity-60"
+              className="rounded-2xl border border-red-300/35 bg-red-500/15 px-3 py-3 text-sm font-semibold text-red-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-sm transition-all duration-150 hover:bg-red-500/24 hover:border-red-200/45 active:scale-[0.99] disabled:opacity-60"
               onClick={() => void reviewCard(1)}
               disabled={saving}
               title="Não conseguiu lembrar ou respondeu errado"
             >
-              🔴
-              <br />
-              Difícil
+              <span className="mx-auto mb-2 block h-2 w-2 rounded-full bg-red-400/85" />
+              <span className="block">Difícil</span>
             </button>
             <button
               type="button"
-              className="rounded-2xl border border-orange-300/30 bg-gradient-to-r from-orange-500/90 to-amber-500/90 px-3 py-4 text-sm font-bold text-white shadow-[0_10px_24px_rgba(249,115,22,0.22)] transition-all duration-150 hover:-translate-y-0.5 hover:from-orange-500 hover:to-amber-500 active:translate-y-0 disabled:opacity-60"
+              className="rounded-2xl border border-orange-300/35 bg-orange-500/15 px-3 py-3 text-sm font-semibold text-orange-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-sm transition-all duration-150 hover:bg-orange-500/24 hover:border-orange-200/45 active:scale-[0.99] disabled:opacity-60"
               onClick={() => void reviewCard(2)}
               disabled={saving}
               title="Lembrou com dificuldade"
             >
-              🟠
-              <br />
-              Médio
+              <span className="mx-auto mb-2 block h-2 w-2 rounded-full bg-orange-400/85" />
+              <span className="block">Médio</span>
             </button>
             <button
               type="button"
-              className="rounded-2xl border border-blue-300/30 bg-gradient-to-r from-blue-500/90 to-indigo-500/90 px-3 py-4 text-sm font-bold text-white shadow-[0_10px_24px_rgba(59,130,246,0.22)] transition-all duration-150 hover:-translate-y-0.5 hover:from-blue-500 hover:to-indigo-500 active:translate-y-0 disabled:opacity-60"
+              className="rounded-2xl border border-blue-300/35 bg-blue-500/15 px-3 py-3 text-sm font-semibold text-blue-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-sm transition-all duration-150 hover:bg-blue-500/24 hover:border-blue-200/45 active:scale-[0.99] disabled:opacity-60"
               onClick={() => void reviewCard(4)}
               disabled={saving}
               title="Acertou com hesitação"
             >
-              🔵
-              <br />
-              Bom
+              <span className="mx-auto mb-2 block h-2 w-2 rounded-full bg-blue-400/85" />
+              <span className="block">Bom</span>
             </button>
             <button
               type="button"
-              className="rounded-2xl border border-emerald-300/30 bg-gradient-to-r from-emerald-500/90 to-teal-500/90 px-3 py-4 text-sm font-bold text-white shadow-[0_10px_24px_rgba(16,185,129,0.22)] transition-all duration-150 hover:-translate-y-0.5 hover:from-emerald-500 hover:to-teal-500 active:translate-y-0 disabled:opacity-60"
+              className="rounded-2xl border border-emerald-300/35 bg-emerald-500/15 px-3 py-3 text-sm font-semibold text-emerald-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-sm transition-all duration-150 hover:bg-emerald-500/24 hover:border-emerald-200/45 active:scale-[0.99] disabled:opacity-60"
               onClick={() => void reviewCard(5)}
               disabled={saving}
               title="Respondeu facilmente"
             >
-              🟢
-              <br />
-              Fácil
+              <span className="mx-auto mb-2 block h-2 w-2 rounded-full bg-emerald-400/85" />
+              <span className="block">Fácil</span>
             </button>
           </div>
         </>
