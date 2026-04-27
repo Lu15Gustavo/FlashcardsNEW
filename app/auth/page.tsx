@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase-client";
 import { mapAuthErrorMessage } from "@/lib/auth-errors";
+import { StatusBanner } from "@/components/status-banner";
 
 type Mode = "login" | "signup" | "forgot";
 type MessageVariant = "info" | "signup-success" | "error";
@@ -329,24 +330,11 @@ export default function AuthPage() {
 
         {message && !showSignupSuccessBanner ? (
           messageVariant === "error" ? (
-            <div className="mt-4 rounded-2xl border border-red-300 bg-gradient-to-r from-red-50 to-rose-50 p-4 text-red-800 shadow-md shadow-red-900/10">
-              <div className="flex items-start gap-3">
-                <div className="relative mt-0.5 h-6 w-6 shrink-0">
-                  <span className="absolute inset-0 rounded-full bg-red-300/35 animate-ping" />
-                  <span className="absolute inset-0 flex items-center justify-center rounded-full bg-red-500 text-white shadow-sm">
-                    <svg viewBox="0 0 20 20" className="h-4 w-4 fill-current" aria-hidden="true">
-                      <path d="M10 1.75a8.25 8.25 0 1 0 0 16.5 8.25 8.25 0 0 0 0-16.5Zm0 11.5a1.125 1.125 0 1 1 0 2.25 1.125 1.125 0 0 1 0-2.25Zm0-8a.75.75 0 0 1 .75.75v5a.75.75 0 0 1-1.5 0v-5a.75.75 0 0 1 .75-.75Z" />
-                    </svg>
-                  </span>
-                </div>
-                <div>
-                  <p className="text-sm font-black">Atenção</p>
-                  <p className="mt-1 text-sm font-semibold">{message}</p>
-                </div>
-              </div>
-            </div>
+            <StatusBanner variant="error" title="Atenção" message={message} />
+          ) : messageVariant === "signup-success" ? (
+            <StatusBanner variant="success" title="Cadastro realizado" message={message} />
           ) : (
-            <p className="mt-4 text-sm font-bold text-brand-700">{message}</p>
+            <StatusBanner variant="info" title="Status" message={message} />
           )
         ) : null}
       </section>

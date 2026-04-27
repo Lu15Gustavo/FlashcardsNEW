@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase-client";
 import { mapAuthErrorMessage } from "@/lib/auth-errors";
+import { StatusBanner } from "@/components/status-banner";
 
 type ConfirmationType = "signup" | "error";
 
@@ -158,13 +159,7 @@ export default function ConfirmationPage() {
             </div>
             <div className="flex-1">
               <h1 className="text-2xl font-black text-red-600">Erro na Confirmação</h1>
-              <p className="mt-2 text-brand-900/80">{errorMessage}</p>
-              <Link
-                href="/auth"
-                className="mt-6 inline-flex items-center rounded-lg bg-red-600 px-6 py-3 font-black text-white transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-red-900/30 active:scale-[0.98]"
-              >
-                Voltar para Login
-              </Link>
+              <StatusBanner variant="error" title="Não foi possível confirmar" message={errorMessage} action={<Link href="/auth" className="inline-flex items-center rounded-xl bg-red-600 px-5 py-2.5 text-sm font-black text-white transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-red-900/30 active:scale-[0.98]">Voltar para Login</Link>} />
             </div>
           </div>
         </section>
@@ -187,13 +182,7 @@ export default function ConfirmationPage() {
           </div>
           <div className="flex-1">
             <h1 className="text-2xl font-black text-emerald-600">Confirmação Bem-Sucedida!</h1>
-            <p className="mt-2 text-base text-brand-900/80">Seu e-mail foi confirmado com sucesso. Agora você pode fazer login e começar a usar sua conta.</p>
-            <Link
-              href="/auth?mode=login"
-              className="mt-6 inline-flex items-center rounded-lg bg-emerald-600 px-6 py-3 font-black text-white transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-900/30 active:scale-[0.98]"
-            >
-              Fazer Login
-            </Link>
+            <StatusBanner variant="success" title="E-mail confirmado" message="Seu e-mail foi validado com sucesso. Agora é só fazer login e começar a usar sua conta." action={<Link href="/auth?mode=login" className="inline-flex items-center rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-black text-white transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-900/30 active:scale-[0.98]">Fazer Login</Link>} />
           </div>
         </div>
       </section>

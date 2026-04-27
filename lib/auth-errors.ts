@@ -39,11 +39,15 @@ export function mapAuthErrorMessage(errorMessage: string, context: AuthErrorCont
     return "Esse link é inválido. Solicite um novo e-mail.";
   }
 
-  if (/password should be at least|weak password/.test(normalized)) {
-    return "A senha é muito fraca. Use pelo menos 6 caracteres.";
+  if (/password should be at least|weak password|password too short|min length|too short/.test(normalized)) {
+    return "A senha está curta demais. Use pelo menos 6 caracteres.";
   }
 
-  if (/same password|password should be different|new password should be different/.test(normalized)) {
+  if (
+    /same password|password should be different|new password should be different|same as current password|same as old password|password matches the old password|must be different from the current password/.test(
+      normalized
+    )
+  ) {
     return "A nova senha precisa ser diferente da senha atual.";
   }
 

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase-client";
 import { mapAuthErrorMessage } from "@/lib/auth-errors";
+import { StatusBanner } from "@/components/status-banner";
 
 type PageState = "loading" | "ready" | "success" | "error";
 
@@ -106,12 +107,12 @@ export default function ResetPasswordPage() {
     }
 
     if (newPassword.length < 6) {
-      setMessage("A nova senha precisa ter pelo menos 6 caracteres.");
+      setMessage(mapAuthErrorMessage("password should be at least 6 characters", "reset"));
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setMessage("As senhas não são iguais.");
+      setMessage("A confirmação precisa ser igual à nova senha.");
       return;
     }
 
@@ -148,13 +149,7 @@ export default function ResetPasswordPage() {
       <main className="page-shell py-14">
         <section className="mx-auto w-full max-w-lg card p-8">
           <h1 className="text-2xl font-black text-red-600">Erro na Redefinição</h1>
-          <p className="mt-3 text-brand-900/80">{message}</p>
-          <Link
-            href="/auth"
-            className="mt-6 inline-flex items-center rounded-lg bg-red-600 px-6 py-3 font-black text-white transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-red-900/30 active:scale-[0.98]"
-          >
-            Voltar para Login
-          </Link>
+          <StatusBanner variant="error" title="Não foi possível concluir" message={message} action={<Link href="/auth" className="inline-flex items-center rounded-xl bg-red-600 px-5 py-2.5 text-sm font-black text-white transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-red-900/30 active:scale-[0.98]">Voltar para Login</Link>} />
         </section>
       </main>
     );
@@ -165,13 +160,7 @@ export default function ResetPasswordPage() {
       <main className="page-shell py-14">
         <section className="mx-auto w-full max-w-lg card p-8">
           <h1 className="text-2xl font-black text-emerald-600">Senha Atualizada!</h1>
-          <p className="mt-3 text-brand-900/80">{message}</p>
-          <Link
-            href="/auth"
-            className="mt-6 inline-flex items-center rounded-lg bg-emerald-600 px-6 py-3 font-black text-white transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-900/30 active:scale-[0.98]"
-          >
-            Ir para Login
-          </Link>
+          <StatusBanner variant="success" title="Tudo certo" message={message} action={<Link href="/auth" className="inline-flex items-center rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-black text-white transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-900/30 active:scale-[0.98]">Ir para Login</Link>} />
         </section>
       </main>
     );
@@ -214,7 +203,7 @@ export default function ResetPasswordPage() {
             />
           </div>
 
-          {message ? <p className="text-sm text-brand-800/90">{message}</p> : null}
+          {message ? <StatusBanner variant="info" title="Mensagem" message={message} /> : null}
 
           <button
             type="submit"
