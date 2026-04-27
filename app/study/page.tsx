@@ -136,6 +136,7 @@ export default function StudyPage() {
   const [deletingDocumentId, setDeletingDocumentId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [flipped, setFlipped] = useState(false);
+  const [answerUnlocked, setAnswerUnlocked] = useState(false);
   const [answerFx, setAnswerFx] = useState<"correct" | "wrong" | null>(null);
   const [responseStart, setResponseStart] = useState(Date.now());
   const [activeDeckId, setActiveDeckId] = useState<string | null>(null);
@@ -187,6 +188,7 @@ export default function StudyPage() {
         setRound(1);
         setCompleted(false);
         setFlipped(false);
+        setAnswerUnlocked(false);
         setAnswerFx(null);
         setResponseStart(Date.now());
         return [];
@@ -207,6 +209,7 @@ export default function StudyPage() {
       setRound(1);
       setCompleted(false);
       setFlipped(false);
+      setAnswerUnlocked(false);
       setAnswerFx(null);
       setResponseStart(Date.now());
 
@@ -224,6 +227,7 @@ export default function StudyPage() {
       setCurrentIndex(0);
       setWrongCardIds([]);
       setCompleted(false);
+      setAnswerUnlocked(false);
       setAnswerFx(null);
       setDueCount(0);
       setTotalCount(0);
@@ -244,6 +248,7 @@ export default function StudyPage() {
           setSessionQueue(loadedCards);
           setCurrentIndex(0);
           setFlipped(false);
+          setAnswerUnlocked(false);
           setResponseStart(Date.now());
           setStudyStarted(true);
           setMustChooseDocument(false);
@@ -264,6 +269,7 @@ export default function StudyPage() {
       setSessionQueue(loadedCards.slice(0, 15));
       setCurrentIndex(0);
       setFlipped(false);
+      setAnswerUnlocked(false);
       setResponseStart(Date.now());
       setStudyStarted(true);
     }
@@ -285,6 +291,7 @@ export default function StudyPage() {
       setRound(1);
       setCompleted(false);
       setFlipped(false);
+      setAnswerUnlocked(false);
       setAnswerFx(null);
       setResponseStart(Date.now());
       setStudyStarted(true);
@@ -306,7 +313,7 @@ export default function StudyPage() {
       return;
     }
 
-    if (!flipped) {
+    if (!answerUnlocked) {
       return;
     }
 
@@ -347,6 +354,7 @@ export default function StudyPage() {
         setWrongCardIds(updatedWrongIds);
         setCurrentIndex((value) => value + 1);
         setFlipped(false);
+        setAnswerUnlocked(false);
         setResponseStart(Date.now());
         return;
       }
@@ -362,6 +370,7 @@ export default function StudyPage() {
           setWrongCardIds([]);
           setRound((value) => value + 1);
           setFlipped(false);
+          setAnswerUnlocked(false);
           setAnswerFx(null);
           setResponseStart(Date.now());
           return;
@@ -371,6 +380,7 @@ export default function StudyPage() {
       setWrongCardIds([]);
       setCompleted(true);
       setFlipped(false);
+      setAnswerUnlocked(false);
       setAnswerFx(null);
     } catch (reviewError) {
       setError(reviewError instanceof Error ? reviewError.message : "Não foi possível registrar a revisão.");
@@ -628,8 +638,15 @@ export default function StudyPage() {
                   {currentIndex + 1}/{sessionQueue.length}
                 </span>
               </div>
-              <button type="button" className="btn btn-secondary px-6 py-2 font-semibold shadow-md hover:shadow-lg transition-all" onClick={() => setFlipped((value) => !value)}>
-                {flipped ? "👁️ Ver frente" : "👁️ Ver verso"}
+              <button
+                type="button"
+                className="btn btn-secondary px-6 py-2 font-semibold shadow-md hover:shadow-lg transition-all"
+                onClick={() => {
+                  setFlipped((value) => !value);
+                  setAnswerUnlocked(true);
+                }}
+              >
+                {flipped ? "👁️ Ver frente" : answerUnlocked ? "👁️ Ver verso novamente" : "👁️ Ver verso"}
               </button>
             </div>
 
@@ -674,18 +691,16 @@ export default function StudyPage() {
             </div>
           </article>
 
-          {!flipped ? (
-            <p className="max-w-2xl w-full mt-5 text-center text-sm font-bold text-brand-700">
-              Vire o card para o verso antes de responder.
-            </p>
-          ) : null}
+          <p className="max-w-2xl w-full mt-5 text-center text-sm font-bold text-brand-700">
+            Você pode responder depois de abrir o verso uma vez. Depois disso, pode virar o card à vontade.
+          </p>
 
           <div className="max-w-2xl w-full mt-8 grid gap-4 grid-cols-4">
             <button
               type="button"
               className="rounded-2xl border border-red-300/35 bg-red-500/15 px-3 py-3 text-sm font-semibold text-red-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-sm transition-all duration-150 hover:bg-red-500/24 hover:border-red-200/45 active:scale-[0.99] disabled:opacity-60"
               onClick={() => void reviewCard(1)}
-              disabled={saving || !flipped}
+              disabled={saving}
               title="Não conseguiu lembrar ou respondeu errado"
             >
               <span className="mx-auto mb-2 block h-2 w-2 rounded-full bg-red-400/85" />
@@ -695,7 +710,7 @@ export default function StudyPage() {
               type="button"
               className="rounded-2xl border border-orange-300/35 bg-orange-500/15 px-3 py-3 text-sm font-semibold text-orange-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-sm transition-all duration-150 hover:bg-orange-500/24 hover:border-orange-200/45 active:scale-[0.99] disabled:opacity-60"
               onClick={() => void reviewCard(2)}
-              disabled={saving || !flipped}
+              disabled={saving}
               title="Lembrou com dificuldade"
             >
               <span className="mx-auto mb-2 block h-2 w-2 rounded-full bg-orange-400/85" />
@@ -705,7 +720,7 @@ export default function StudyPage() {
               type="button"
               className="rounded-2xl border border-blue-300/35 bg-blue-500/15 px-3 py-3 text-sm font-semibold text-blue-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-sm transition-all duration-150 hover:bg-blue-500/24 hover:border-blue-200/45 active:scale-[0.99] disabled:opacity-60"
               onClick={() => void reviewCard(4)}
-              disabled={saving || !flipped}
+              disabled={saving}
               title="Acertou com hesitação"
             >
               <span className="mx-auto mb-2 block h-2 w-2 rounded-full bg-blue-400/85" />
@@ -715,7 +730,7 @@ export default function StudyPage() {
               type="button"
               className="rounded-2xl border border-emerald-300/35 bg-emerald-500/15 px-3 py-3 text-sm font-semibold text-emerald-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-sm transition-all duration-150 hover:bg-emerald-500/24 hover:border-emerald-200/45 active:scale-[0.99] disabled:opacity-60"
               onClick={() => void reviewCard(5)}
-              disabled={saving || !flipped}
+              disabled={saving}
               title="Respondeu facilmente"
             >
               <span className="mx-auto mb-2 block h-2 w-2 rounded-full bg-emerald-400/85" />
