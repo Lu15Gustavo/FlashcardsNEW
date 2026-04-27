@@ -642,8 +642,11 @@ export default function StudyPage() {
                 type="button"
                 className="btn btn-secondary px-6 py-2 font-semibold shadow-md hover:shadow-lg transition-all"
                 onClick={() => {
+                  if (!flipped) {
+                    setAnswerUnlocked(true);
+                  }
+
                   setFlipped((value) => !value);
-                  setAnswerUnlocked(true);
                 }}
               >
                 {flipped ? "👁️ Ver frente" : answerUnlocked ? "👁️ Ver verso novamente" : "👁️ Ver verso"}
@@ -700,7 +703,7 @@ export default function StudyPage() {
               type="button"
               className="rounded-2xl border border-red-300/35 bg-red-500/15 px-3 py-3 text-sm font-semibold text-red-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-sm transition-all duration-150 hover:bg-red-500/24 hover:border-red-200/45 active:scale-[0.99] disabled:opacity-60"
               onClick={() => void reviewCard(1)}
-              disabled={saving}
+              disabled={saving || !answerUnlocked}
               title="Não conseguiu lembrar ou respondeu errado"
             >
               <span className="mx-auto mb-2 block h-2 w-2 rounded-full bg-red-400/85" />
@@ -710,7 +713,7 @@ export default function StudyPage() {
               type="button"
               className="rounded-2xl border border-orange-300/35 bg-orange-500/15 px-3 py-3 text-sm font-semibold text-orange-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-sm transition-all duration-150 hover:bg-orange-500/24 hover:border-orange-200/45 active:scale-[0.99] disabled:opacity-60"
               onClick={() => void reviewCard(2)}
-              disabled={saving}
+              disabled={saving || !answerUnlocked}
               title="Lembrou com dificuldade"
             >
               <span className="mx-auto mb-2 block h-2 w-2 rounded-full bg-orange-400/85" />
@@ -720,7 +723,7 @@ export default function StudyPage() {
               type="button"
               className="rounded-2xl border border-blue-300/35 bg-blue-500/15 px-3 py-3 text-sm font-semibold text-blue-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-sm transition-all duration-150 hover:bg-blue-500/24 hover:border-blue-200/45 active:scale-[0.99] disabled:opacity-60"
               onClick={() => void reviewCard(4)}
-              disabled={saving}
+              disabled={saving || !answerUnlocked}
               title="Acertou com hesitação"
             >
               <span className="mx-auto mb-2 block h-2 w-2 rounded-full bg-blue-400/85" />
@@ -730,7 +733,7 @@ export default function StudyPage() {
               type="button"
               className="rounded-2xl border border-emerald-300/35 bg-emerald-500/15 px-3 py-3 text-sm font-semibold text-emerald-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-sm transition-all duration-150 hover:bg-emerald-500/24 hover:border-emerald-200/45 active:scale-[0.99] disabled:opacity-60"
               onClick={() => void reviewCard(5)}
-              disabled={saving}
+              disabled={saving || !answerUnlocked}
               title="Respondeu facilmente"
             >
               <span className="mx-auto mb-2 block h-2 w-2 rounded-full bg-emerald-400/85" />
