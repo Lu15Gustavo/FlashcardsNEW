@@ -12,10 +12,10 @@ const generationOptions: Array<{
   title: string;
   description: string;
 }> = [
-  { value: "standard", title: "Padrão", description: "5 fáceis + 5 médias + 5 difíceis" },
-  { value: "easy", title: "Fáceis", description: "Cards mais diretos e simples" },
-  { value: "medium", title: "Médios", description: "Cards equilibrados" },
-  { value: "hard", title: "Difíceis", description: "Cards mais profundos e analíticos" }
+  { value: "standard", title: "Padrão", description: "5 Básicos + 5 Regulares + 5 Complexos" },
+  { value: "easy", title: "Básico", description: "Conceitos diretos para base teórica" },
+  { value: "medium", title: "Regular", description: "Exercita entendimento em cenários práticos" },
+  { value: "hard", title: "Complexo", description: "Exige raciocínio crítico e maior profundidade" }
 ];
 
 export default function UploadPage() {
