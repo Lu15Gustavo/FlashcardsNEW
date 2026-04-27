@@ -10,6 +10,7 @@ const links = [
   { href: "/auth", label: "Login/Cadastro" },
   { href: "/dashboard", label: "Dashboard" },
   { href: "/upload", label: "Enviar PDF" },
+  { href: "/study-mode", label: "Modo de estudo" },
   { href: "/decks", label: "Decks" }
 ];
 

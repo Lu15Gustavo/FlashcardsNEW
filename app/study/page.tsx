@@ -27,21 +27,6 @@ type StudyResponse = {
   message?: string;
 };
 
-const reviewModeLabels: Record<ReviewMode, { title: string; description: string }> = {
-  smart: {
-    title: "Inteligente",
-    description: "Prioriza cards vencidos. Se não houver, mostra os demais."
-  },
-  due: {
-    title: "Repetição espaçada",
-    description: "Mostra apenas cards que já estão no horário de revisão."
-  },
-  all: {
-    title: "Todos os cards",
-    description: "Treino livre com todos os cards do filtro atual."
-  }
-};
-
 function sanitizeCardText(rawText?: string | null) {
   const base = String(rawText ?? "")
     .replace(/\\n/g, "\n")
@@ -117,6 +102,14 @@ function getCardTextSizeClass(text: string) {
   }
 
   return "text-[clamp(1.32rem,2.7vw,2.2rem)] leading-tight";
+}
+
+function normalizeReviewMode(value: string | null): ReviewMode {
+  if (value === "due" || value === "all") {
+    return value;
+  }
+
+  return "smart";
 }
 
 export default function StudyPage() {
@@ -241,9 +234,10 @@ export default function StudyPage() {
 
   useEffect(() => {
     const queryDeckId = searchParams.get("deckId")?.trim() ?? "";
+    const queryReviewMode = normalizeReviewMode(searchParams.get("reviewMode"));
 
     if (queryDeckId) {
-      void loadCards(undefined, queryDeckId, reviewMode).then((loadedCards) => {
+      void loadCards(undefined, queryDeckId, queryReviewMode).then((loadedCards) => {
         if (loadedCards.length > 0) {
           setSessionQueue(loadedCards);
           setCurrentIndex(0);
@@ -259,7 +253,7 @@ export default function StudyPage() {
       return;
     }
 
-    void loadCards(undefined, undefined, reviewMode);
+    void loadCards(undefined, undefined, queryReviewMode);
   }, [searchParams]);
 
   const startWithDocument = async (documentId: string) => {
@@ -422,46 +416,6 @@ export default function StudyPage() {
 
   return (
     <main className="page-shell flex min-h-screen flex-col items-center justify-center py-4">
-      {!loading && !error && !emptyDeckStudy ? (
-        <section className="mb-5 w-full max-w-3xl rounded-3xl border border-brand-300/35 bg-brand-950/45 p-4 shadow-[0_18px_40px_rgba(15,10,31,0.28)] backdrop-blur-sm">
-          <p className="text-xs font-black uppercase tracking-wide text-brand-100/90">Modo de estudo</p>
-          <div className="mt-3 grid gap-2 md:grid-cols-3">
-            {(["smart", "due", "all"] as ReviewMode[]).map((mode) => {
-              const active = reviewMode === mode;
-              return (
-                <button
-                  key={mode}
-                  type="button"
-                  onClick={() => void changeReviewMode(mode)}
-                  className={`rounded-2xl border px-4 py-3 text-left transition-all duration-150 ${
-                    active
-                      ? "border-brand-400 bg-gradient-to-br from-brand-700 to-brand-600 text-white shadow-lg shadow-brand-950/35"
-                      : "border-brand-300/40 bg-brand-900/45 text-white/85 hover:border-brand-400 hover:bg-brand-900/60"
-                  }`}
-                >
-                  <p className="text-sm font-black">{reviewModeLabels[mode].title}</p>
-                  <p className={`mt-1 text-xs ${active ? "text-white/85" : "text-white/70"}`}>{reviewModeLabels[mode].description}</p>
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-semibold text-brand-700">
-            <span className="rounded-full border border-brand-300/35 bg-brand-900/50 px-3 py-1 text-brand-100">
-              Vencidos: {dueCount}
-            </span>
-            <span className="rounded-full border border-brand-300/35 bg-brand-900/50 px-3 py-1 text-brand-100">
-              Total no filtro: {totalCount}
-            </span>
-            {dueOnly ? (
-              <span className="rounded-full border border-emerald-300/35 bg-emerald-500/15 px-3 py-1 text-emerald-100">
-                Sessão usando apenas cards vencidos
-              </span>
-            ) : null}
-          </div>
-        </section>
-      ) : null}
-
       {error ? (
         <section className="max-w-2xl w-full rounded-2xl border border-brand-100 bg-brand-50 p-6 text-center">
           <p className="text-sm font-bold text-brand-800">{error}</p>
@@ -649,7 +603,7 @@ export default function StudyPage() {
                   setFlipped((value) => !value);
                 }}
               >
-                {flipped ? "👁️ Ver frente" : answerUnlocked ? "👁️ Ver verso novamente" : "👁️ Ver verso"}
+                {flipped ? "👁️ Ver frente" : answerUnlocked ? "👁️ Ver verso" : "👁️ Ver verso"}
               </button>
             </div>
 
@@ -695,7 +649,7 @@ export default function StudyPage() {
           </article>
 
           <p className="max-w-2xl w-full mt-5 text-center text-sm font-bold text-brand-700">
-            Você pode responder depois de abrir o verso uma vez. Depois disso, pode virar o card à vontade.
+            Você pode responder depois de abrir o verso.
           </p>
 
           <div className="max-w-2xl w-full mt-8 grid gap-4 grid-cols-4">
