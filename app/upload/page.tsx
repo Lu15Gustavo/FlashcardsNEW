@@ -39,18 +39,18 @@ export default function UploadPage() {
       return;
     }
 
-    setGenerationProgress(10);
+    setGenerationProgress(8);
 
     const timer = window.setInterval(() => {
       setGenerationProgress((current) => {
-        if (current >= 96) {
-          return 96;
+        if (current >= 94) {
+          return 94;
         }
 
-        const nextStep = current < 35 ? 10 : current < 65 ? 6 : current < 86 ? 3 : 1;
-        return Math.min(current + nextStep, 96);
+        const nextStep = current < 30 ? 6 : current < 60 ? 4 : current < 85 ? 2 : 1;
+        return Math.min(current + nextStep, 94);
       });
-    }, 170);
+    }, 280);
 
     return () => window.clearInterval(timer);
   }, [isSubmitting]);
@@ -113,7 +113,7 @@ export default function UploadPage() {
     setIsSubmitting(true);
     setStatus("Processando PDF...");
     setStatusType("info");
-    setGenerationProgress(10);
+    setGenerationProgress(8);
 
     try {
       const response = await fetch("/api/upload", {
@@ -392,7 +392,7 @@ export default function UploadPage() {
                 <div className="h-3 w-full overflow-hidden rounded-full bg-brand-950/70 ring-1 ring-brand-300/20">
                     <div className="relative h-full w-full overflow-hidden rounded-full">
                       <div
-                        className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-emerald-400 via-brand-500 to-cyan-300 transition-[width] duration-300 ease-out"
+                        className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-emerald-400 via-brand-500 to-cyan-300 transition-[width] duration-700 ease-out"
                         style={{ width: `${generationProgress}%` }}
                         role="progressbar"
                         aria-valuenow={generationProgress}
