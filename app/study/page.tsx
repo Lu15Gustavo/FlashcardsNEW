@@ -16,13 +16,29 @@ type DocumentOption = {
   totalCards: number;
 };
 
+function sanitizeCardText(rawText?: string | null) {
+  const base = String(rawText ?? "")
+    .replace(/\\n/g, "\n")
+    .replace(/\r\n?/g, "\n")
+    .replace(/^\s{0,3}#{1,6}\s+/gm, "")
+    .replace(/\*\*(.*?)\*\*/g, "$1")
+    .replace(/__(.*?)__/g, "$1")
+    .replace(/`([^`]*)`/g, "$1")
+    .replace(/^\s*[-*]\s+/gm, "• ")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+  return base;
+}
+
 function getCardBackText(card: Flashcard) {
-  const answer = card.answer?.trim();
+  const answer = sanitizeCardText(card.answer);
   if (answer) {
     return answer;
   }
 
-  const notes = card.notes?.trim();
+  const notes = sanitizeCardText(card.notes);
   if (notes) {
     return notes;
   }
@@ -31,7 +47,7 @@ function getCardBackText(card: Flashcard) {
 }
 
 function getCardFrontText(card: Flashcard) {
-  const question = card.question?.trim();
+  const question = sanitizeCardText(card.question);
   if (!question) {
     return "Qual é a ideia principal deste flashcard?";
   }
@@ -493,7 +509,7 @@ export default function StudyPage() {
                     WebkitBackfaceVisibility: "hidden"
                   }}
                 >
-                  <h2 className={`flex h-full w-full items-center justify-center overflow-hidden whitespace-pre-wrap break-words text-center font-extrabold text-brand-900 ${frontTextClass}`}>
+                  <h2 className={`flex h-full w-full items-center justify-center overflow-y-auto px-2 text-center font-extrabold text-brand-900 whitespace-pre-wrap break-words [overflow-wrap:anywhere] ${frontTextClass}`}>
                     {frontText}
                   </h2>
                 </div>
@@ -506,7 +522,7 @@ export default function StudyPage() {
                     WebkitBackfaceVisibility: "hidden"
                   }}
                 >
-                  <h2 className={`flex h-full w-full items-center justify-center overflow-hidden whitespace-pre-wrap break-words text-center font-extrabold text-brand-900 ${backTextClass}`}>
+                  <h2 className={`flex h-full w-full items-center justify-center overflow-y-auto px-2 text-center font-extrabold text-brand-900 whitespace-pre-wrap break-words [overflow-wrap:anywhere] ${backTextClass}`}>
                     {backText}
                   </h2>
                 </div>
