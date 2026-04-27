@@ -16,6 +16,32 @@ type DocumentOption = {
   totalCards: number;
 };
 
+type ReviewMode = "smart" | "due" | "all";
+
+type StudyResponse = {
+  cards?: Flashcard[];
+  documents?: DocumentOption[];
+  dueOnly?: boolean;
+  dueCount?: number;
+  totalCount?: number;
+  message?: string;
+};
+
+const reviewModeLabels: Record<ReviewMode, { title: string; description: string }> = {
+  smart: {
+    title: "Inteligente",
+    description: "Prioriza cards vencidos. Se não houver, mostra os demais."
+  },
+  due: {
+    title: "Repetição espaçada",
+    description: "Mostra apenas cards que já estão no horário de revisão."
+  },
+  all: {
+    title: "Todos os cards",
+    description: "Treino livre com todos os cards do filtro atual."
+  }
+};
+
 function sanitizeCardText(rawText?: string | null) {
   const base = String(rawText ?? "")
     .replace(/\\n/g, "\n")
@@ -112,8 +138,13 @@ export default function StudyPage() {
   const [flipped, setFlipped] = useState(false);
   const [answerFx, setAnswerFx] = useState<"correct" | "wrong" | null>(null);
   const [responseStart, setResponseStart] = useState(Date.now());
+  const [activeDeckId, setActiveDeckId] = useState<string | null>(null);
+  const [reviewMode, setReviewMode] = useState<ReviewMode>("smart");
+  const [dueCount, setDueCount] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
+  const [dueOnly, setDueOnly] = useState(false);
 
-  const loadCards = async (documentId?: string, deckId?: string): Promise<Flashcard[]> => {
+  const loadCards = async (documentId?: string, deckId?: string, mode: ReviewMode = reviewMode): Promise<Flashcard[]> => {
     setLoading(true);
     setError("");
 
@@ -121,6 +152,7 @@ export default function StudyPage() {
       const hasDocumentFilter = typeof documentId === "string" && documentId !== "all";
       const hasDeckFilter = typeof deckId === "string" && deckId.length > 0;
       const query = new URLSearchParams();
+      query.set("reviewMode", mode);
       if (hasDocumentFilter) {
         query.set("documentId", documentId);
       }
@@ -130,11 +162,7 @@ export default function StudyPage() {
 
       const params = query.toString() ? `?${query.toString()}` : "";
       const response = await fetch(`/api/flashcards/generate${params}`, { cache: "no-store" });
-      const data = (await response.json()) as {
-        cards?: Flashcard[];
-        documents?: DocumentOption[];
-        message?: string;
-      };
+      const data = (await response.json()) as StudyResponse;
 
       if (!response.ok) {
         throw new Error(data.message ?? "Não foi possível carregar os flashcards.");
@@ -142,6 +170,10 @@ export default function StudyPage() {
 
       const nextDocuments = Array.isArray(data.documents) ? data.documents : [];
       setDocuments(nextDocuments);
+      setDueCount(Number(data.dueCount ?? 0));
+      setTotalCount(Number(data.totalCount ?? 0));
+      setDueOnly(Boolean(data.dueOnly));
+      setReviewMode(mode);
 
       if (!hasDocumentFilter && !hasDeckFilter && nextDocuments.length > 1) {
         setMustChooseDocument(true);
@@ -160,6 +192,7 @@ export default function StudyPage() {
 
       setMustChooseDocument(false);
       setSelectedDocumentId(documentId ?? "all");
+      setActiveDeckId(deckId ?? null);
       setStudyStarted(false);
 
       const nextCards = Array.isArray(data.cards) ? data.cards : [];
@@ -184,6 +217,9 @@ export default function StudyPage() {
       setWrongCardIds([]);
       setCompleted(false);
       setAnswerFx(null);
+      setDueCount(0);
+      setTotalCount(0);
+      setDueOnly(false);
       return [];
     } finally {
       setLoading(false);
@@ -194,7 +230,7 @@ export default function StudyPage() {
     const queryDeckId = searchParams.get("deckId")?.trim() ?? "";
 
     if (queryDeckId) {
-      void loadCards(undefined, queryDeckId).then((loadedCards) => {
+      void loadCards(undefined, queryDeckId, reviewMode).then((loadedCards) => {
         if (loadedCards.length > 0) {
           setSessionQueue(loadedCards);
           setCurrentIndex(0);
@@ -207,12 +243,12 @@ export default function StudyPage() {
       return;
     }
 
-    void loadCards();
+    void loadCards(undefined, undefined, reviewMode);
   }, [searchParams]);
 
   const startWithDocument = async (documentId: string) => {
     setSelectedDocumentId(documentId);
-    const loadedCards = await loadCards(documentId);
+    const loadedCards = await loadCards(documentId, undefined, reviewMode);
     if (loadedCards.length > 0) {
       setSessionQueue(loadedCards.slice(0, 15));
       setCurrentIndex(0);
@@ -220,6 +256,32 @@ export default function StudyPage() {
       setResponseStart(Date.now());
       setStudyStarted(true);
     }
+  };
+
+  const changeReviewMode = async (nextMode: ReviewMode) => {
+    if (nextMode === reviewMode) {
+      return;
+    }
+
+    const docFilter = selectedDocumentId === "all" ? undefined : selectedDocumentId;
+    const loadedCards = await loadCards(docFilter, activeDeckId ?? undefined, nextMode);
+
+    if (loadedCards.length > 0) {
+      const initialQueue = activeDeckId ? loadedCards : loadedCards.slice(0, 15);
+      setSessionQueue(initialQueue);
+      setCurrentIndex(0);
+      setWrongCardIds([]);
+      setRound(1);
+      setCompleted(false);
+      setFlipped(false);
+      setAnswerFx(null);
+      setResponseStart(Date.now());
+      setStudyStarted(true);
+      return;
+    }
+
+    setStudyStarted(false);
+    setCompleted(false);
   };
 
   const selectedCard = sessionQueue[currentIndex] ?? null;
@@ -339,13 +401,53 @@ export default function StudyPage() {
 
   return (
     <main className="page-shell flex min-h-screen flex-col items-center justify-center py-4">
+      {!loading && !error ? (
+        <section className="mb-5 w-full max-w-3xl rounded-2xl border border-brand-200 bg-brand-50/80 p-4">
+          <p className="text-xs font-black uppercase tracking-wide text-brand-700">Modo de estudo</p>
+          <div className="mt-3 grid gap-2 md:grid-cols-3">
+            {(["smart", "due", "all"] as ReviewMode[]).map((mode) => {
+              const active = reviewMode === mode;
+              return (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => void changeReviewMode(mode)}
+                  className={`rounded-2xl border px-4 py-3 text-left transition-all duration-150 ${
+                    active
+                      ? "border-brand-500 bg-brand-700 text-white shadow-lg"
+                      : "border-brand-300 bg-brand-950/35 text-white/90 hover:border-brand-500 hover:bg-brand-950/50"
+                  }`}
+                >
+                  <p className="text-sm font-black">{reviewModeLabels[mode].title}</p>
+                  <p className={`mt-1 text-xs ${active ? "text-white/85" : "text-white/70"}`}>{reviewModeLabels[mode].description}</p>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-semibold text-brand-700">
+            <span className="rounded-full border border-brand-300 bg-white/70 px-3 py-1">
+              Vencidos: {dueCount}
+            </span>
+            <span className="rounded-full border border-brand-300 bg-white/70 px-3 py-1">
+              Total no filtro: {totalCount}
+            </span>
+            {dueOnly ? (
+              <span className="rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1 text-emerald-700">
+                Sessão usando apenas cards vencidos
+              </span>
+            ) : null}
+          </div>
+        </section>
+      ) : null}
+
       {error ? (
         <section className="max-w-2xl w-full rounded-2xl border border-brand-100 bg-brand-50 p-6 text-center">
           <p className="text-sm font-bold text-brand-800">{error}</p>
           <button
             type="button"
             className="mt-4 btn btn-secondary"
-            onClick={() => void loadCards(selectedDocumentId === "all" ? undefined : selectedDocumentId)}
+            onClick={() => void loadCards(selectedDocumentId === "all" ? undefined : selectedDocumentId, activeDeckId ?? undefined, reviewMode)}
           >
             Tentar novamente
           </button>
@@ -437,11 +539,24 @@ export default function StudyPage() {
         </section>
       ) : !selectedCard ? (
         <section className="max-w-2xl w-full rounded-2xl border border-brand-100 bg-brand-50 p-6 text-center">
-          <p className="text-sm font-bold text-brand-800">Nenhum flashcard encontrado.</p>
+          <p className="text-sm font-bold text-brand-800">
+            {reviewMode === "due" && totalCount > 0
+              ? "Nenhum card vencido agora. Você está em dia na repetição espaçada."
+              : "Nenhum flashcard encontrado."}
+          </p>
+          {reviewMode === "due" && totalCount > 0 ? (
+            <button
+              type="button"
+              className="mt-4 btn btn-primary"
+              onClick={() => void changeReviewMode("all")}
+            >
+              Estudar todos os cards agora
+            </button>
+          ) : null}
           <button
             type="button"
             className="mt-4 btn btn-secondary"
-            onClick={() => void loadCards(selectedDocumentId === "all" ? undefined : selectedDocumentId)}
+            onClick={() => void loadCards(selectedDocumentId === "all" ? undefined : selectedDocumentId, activeDeckId ?? undefined, reviewMode)}
           >
             Recarregar
           </button>
@@ -453,7 +568,7 @@ export default function StudyPage() {
           <button
             type="button"
             className="mt-6 inline-flex items-center justify-center rounded-2xl border border-brand-400/40 bg-brand-700 px-8 py-3 text-lg font-bold text-white shadow-lg transition hover:bg-brand-600"
-            onClick={() => void loadCards(selectedDocumentId === "all" ? undefined : selectedDocumentId)}
+            onClick={() => void loadCards(selectedDocumentId === "all" ? undefined : selectedDocumentId, activeDeckId ?? undefined, reviewMode)}
           >
             Estudar novamente
           </button>

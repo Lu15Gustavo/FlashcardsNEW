@@ -11,6 +11,8 @@ type DocumentOption = {
   totalCards: number;
 };
 
+type ReviewMode = "smart" | "due" | "all";
+
 function mapDbCard(card: Record<string, unknown>): Flashcard {
   const documentRelation = card.documents;
   const documentName = Array.isArray(documentRelation)
@@ -84,10 +86,47 @@ function isDue(card: Flashcard, nowTime: number): boolean {
   return dueTime <= nowTime;
 }
 
+function normalizeReviewMode(rawMode?: string | null): ReviewMode {
+  if (rawMode === "due" || rawMode === "all") {
+    return rawMode;
+  }
+  return "smart";
+}
+
+function pickCardsByMode(cards: Flashcard[], mode: ReviewMode, nowTime: number) {
+  const dueCards = cards.filter((card) => isDue(card, nowTime));
+
+  if (mode === "due") {
+    return {
+      cards: dueCards,
+      dueOnly: true,
+      dueCount: dueCards.length,
+      totalCount: cards.length
+    };
+  }
+
+  if (mode === "all") {
+    return {
+      cards,
+      dueOnly: false,
+      dueCount: dueCards.length,
+      totalCount: cards.length
+    };
+  }
+
+  return {
+    cards: dueCards.length > 0 ? dueCards : cards,
+    dueOnly: dueCards.length > 0,
+    dueCount: dueCards.length,
+    totalCount: cards.length
+  };
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const selectedDocumentId = searchParams.get("documentId")?.trim();
   const selectedDeckId = searchParams.get("deckId")?.trim();
+  const reviewMode = normalizeReviewMode(searchParams.get("reviewMode")?.trim());
 
   const hasSupabaseEnv =
     Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) && Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
@@ -118,23 +157,26 @@ export async function GET(request: Request) {
           ? allCards.filter((card) => card.documentId === selectedDocumentId)
           : allCards;
 
+      const nowTime = Date.now();
+      const picked = pickCardsByMode(cardsBySelection, reviewMode, nowTime);
+
       if (selectedDeckId) {
-        const shuffledDeckCards = shuffleCards(cardsBySelection);
+        const shuffledDeckCards = shuffleCards(picked.cards);
 
         return NextResponse.json({
           cards: shuffledDeckCards,
-          dueOnly: false,
+          dueOnly: picked.dueOnly,
+          dueCount: picked.dueCount,
+          totalCount: picked.totalCount,
           documents: documentOptions
         });
       }
 
-      const nowTime = Date.now();
-      const dueCards = cardsBySelection.filter((card) => isDue(card, nowTime));
-      const cardsToReturn = dueCards.length > 0 ? dueCards : cardsBySelection;
-
       return NextResponse.json({
-        cards: cardsToReturn,
-        dueOnly: dueCards.length > 0,
+        cards: picked.cards,
+        dueOnly: picked.dueOnly,
+        dueCount: picked.dueCount,
+        totalCount: picked.totalCount,
         documents: documentOptions
       });
     }
@@ -148,23 +190,26 @@ export async function GET(request: Request) {
       ? allCards.filter((card) => card.documentId === selectedDocumentId)
       : allCards;
 
+  const nowTime = Date.now();
+  const picked = pickCardsByMode(cardsBySelection, reviewMode, nowTime);
+
   if (selectedDeckId) {
-    const shuffledDeckCards = shuffleCards(cardsBySelection);
+    const shuffledDeckCards = shuffleCards(picked.cards);
 
     return NextResponse.json({
       cards: shuffledDeckCards,
-      dueOnly: false,
+      dueOnly: picked.dueOnly,
+      dueCount: picked.dueCount,
+      totalCount: picked.totalCount,
       documents: documentOptions
     });
   }
 
-  const nowTime = Date.now();
-  const dueCards = cardsBySelection.filter((card) => isDue(card, nowTime));
-  const cardsToReturn = dueCards.length > 0 ? dueCards : cardsBySelection;
-
   return NextResponse.json({
-    cards: cardsToReturn,
-    dueOnly: dueCards.length > 0,
+    cards: picked.cards,
+    dueOnly: picked.dueOnly,
+    dueCount: picked.dueCount,
+    totalCount: picked.totalCount,
     documents: documentOptions
   });
 }
