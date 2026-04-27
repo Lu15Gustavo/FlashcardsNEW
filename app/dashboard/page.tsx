@@ -280,13 +280,13 @@ export default async function DashboardPage({ searchParams }: { searchParams?: D
         <h1 className="text-3xl font-black text-brand-900">Dashboard</h1>
         <p className="mt-2 text-brand-900/80">Visão geral de desempenho, tempo médio e distribuição dos estudos.</p>
 
-        <form className="mt-6 grid gap-4 rounded-3xl border border-brand-100 bg-brand-50/70 p-4 md:grid-cols-[1fr_1fr_auto]" method="get">
-          <label className="grid gap-2 text-sm font-bold text-brand-800">
+        <form className="mt-6 grid gap-4 rounded-3xl border border-brand-300 bg-brand-950/35 p-4 md:grid-cols-[1fr_1fr_auto]" method="get">
+          <label className="grid gap-2 text-sm font-bold text-brand-100">
             Período
             <select
               name="range"
               defaultValue={selectedRange}
-              className="rounded-2xl border border-brand-200 bg-white px-4 py-3 text-brand-900 shadow-sm outline-none transition focus:border-brand-500"
+              className="rounded-2xl border border-brand-300 bg-brand-900/45 px-4 py-3 text-white shadow-sm outline-none transition focus:border-brand-500"
             >
               <option value="day">Diário</option>
               <option value="week">Semanal</option>
@@ -294,12 +294,12 @@ export default async function DashboardPage({ searchParams }: { searchParams?: D
             </select>
           </label>
 
-          <label className="grid gap-2 text-sm font-bold text-brand-800">
+          <label className="grid gap-2 text-sm font-bold text-brand-100">
             Arquivo
             <select
               name="documentId"
               defaultValue={selectedDocumentId}
-              className="rounded-2xl border border-brand-200 bg-white px-4 py-3 text-brand-900 shadow-sm outline-none transition focus:border-brand-500"
+              className="rounded-2xl border border-brand-300 bg-brand-900/45 px-4 py-3 text-white shadow-sm outline-none transition focus:border-brand-500"
             >
               <option value="all">Todos os PDFs</option>
               {documentSummaries.map((document) => (
@@ -319,10 +319,10 @@ export default async function DashboardPage({ searchParams }: { searchParams?: D
         </form>
 
         <div className="mt-5 flex flex-wrap items-center gap-2">
-          <span className="rounded-full border border-brand-200 bg-brand-50 px-4 py-2 text-sm font-bold text-brand-800">
+          <span className="rounded-full border border-brand-300 bg-brand-900/40 px-4 py-2 text-sm font-bold text-brand-100">
             {rangeConfig.label}
           </span>
-          <span className="rounded-full border border-brand-200 bg-brand-50 px-4 py-2 text-sm font-bold text-brand-800">
+          <span className="rounded-full border border-brand-300 bg-brand-900/40 px-4 py-2 text-sm font-bold text-brand-100">
             {activeDocumentName}
           </span>
         </div>
