@@ -67,6 +67,7 @@ export default function DecksPage() {
   const availableCardGroups = useMemo(() => groupCardsByDocument(availableCards), [availableCards]);
   const selectedGroups = availableCardGroups.filter((group) => selectedGroupKeys.includes(group.key));
   const selectedCardsCount = selectedGroups.reduce((total, group) => total + group.totalCards, 0);
+  const showTopHeader = formMode === "idle" && !deckForAddingCards;
 
   const colors = [
     "#ef4444", // red
@@ -357,25 +358,27 @@ export default function DecksPage() {
   return (
     <main className="page-shell py-8">
       <section className="mx-auto max-w-4xl">
-        <div className="mb-8 rounded-3xl border border-brand-300 bg-gradient-to-br from-brand-950/75 via-brand-900/45 to-brand-800/20 p-6 shadow-xl shadow-brand-950/20">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <span className="mb-2 inline-flex rounded-full bg-brand-100/10 px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-brand-200 ring-1 ring-brand-200/20">
-                Organização visual
-              </span>
-              <h1 className="text-3xl font-black text-brand-50">Meus Decks</h1>
-              <p className="mt-2 max-w-2xl text-brand-100/80">Organize seus flashcards por tema, disciplina ou assunto.</p>
+        {showTopHeader ? (
+          <div className="mb-8 rounded-3xl border border-brand-300 bg-gradient-to-br from-brand-950/75 via-brand-900/45 to-brand-800/20 p-6 shadow-xl shadow-brand-950/20">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <span className="mb-2 inline-flex rounded-full bg-brand-100/10 px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-brand-200 ring-1 ring-brand-200/20">
+                  Organização visual
+                </span>
+                <h1 className="text-3xl font-black text-brand-50">Meus Decks</h1>
+                <p className="mt-2 max-w-2xl text-brand-100/80">Organize seus flashcards por tema, disciplina ou assunto.</p>
+              </div>
+              <button
+                type="button"
+                className="rounded-2xl border border-brand-400/40 bg-gradient-to-r from-brand-600 to-brand-700 px-6 py-3 font-black text-white shadow-lg shadow-brand-950/30 transition hover:-translate-y-0.5 hover:from-brand-500 hover:to-brand-600 disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={startCreate}
+                disabled={submitting || savingCards}
+              >
+                + Novo Deck
+              </button>
             </div>
-          <button
-            type="button"
-            className="rounded-2xl border border-brand-400/40 bg-gradient-to-r from-brand-600 to-brand-700 px-6 py-3 font-black text-white shadow-lg shadow-brand-950/30 transition hover:-translate-y-0.5 hover:from-brand-500 hover:to-brand-600 disabled:cursor-not-allowed disabled:opacity-60"
-            onClick={startCreate}
-            disabled={submitting || savingCards}
-          >
-            + Novo Deck
-          </button>
           </div>
-        </div>
+        ) : null}
 
         {error && (
           <div className="mb-6 rounded-2xl border border-rose-200 bg-rose-50 p-4">

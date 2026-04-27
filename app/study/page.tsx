@@ -501,6 +501,20 @@ export default function StudyPage() {
             ))}
           </div>
         </section>
+      ) : emptyDeckStudy ? (
+        <section className="max-w-2xl w-full rounded-3xl border border-rose-300/40 bg-gradient-to-br from-rose-50 to-brand-50 p-8 text-center shadow-lg shadow-rose-900/10">
+          <p className="text-2xl font-black text-rose-700">Este deck ainda não tem flashcards.</p>
+          <p className="mt-3 text-sm font-semibold text-brand-800/90">
+            Adicione PDFs para começar a estudar esse deck.
+          </p>
+          <button
+            type="button"
+            className="mt-6 inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-brand-600 to-brand-700 px-6 py-3 text-sm font-black text-white shadow-lg shadow-brand-950/20 transition-all duration-200 hover:-translate-y-0.5 hover:from-brand-500 hover:to-brand-600 active:scale-[0.98]"
+            onClick={() => window.location.assign("/upload")}
+          >
+            Adicionar PDFs
+          </button>
+        </section>
       ) : !completed && !studyStarted ? (
         <section className="max-w-3xl w-full rounded-3xl border border-brand-100 bg-brand-50 p-8">
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -551,21 +565,11 @@ export default function StudyPage() {
       ) : !selectedCard ? (
         <section className="max-w-2xl w-full rounded-2xl border border-brand-100 bg-brand-50 p-6 text-center">
           <p className="text-sm font-bold text-brand-800">
-            {emptyDeckStudy
-              ? "Este deck ainda não tem flashcards. Adicione PDFs para começar a estudar."
-              : reviewMode === "due" && totalCount > 0
-                ? "Nenhum card vencido agora. Você está em dia na repetição espaçada."
-                : "Nenhum flashcard encontrado."}
+            {reviewMode === "due" && totalCount > 0
+              ? "Nenhum card vencido agora. Você está em dia na repetição espaçada."
+              : "Nenhum flashcard encontrado."}
           </p>
-          {emptyDeckStudy ? (
-            <button
-              type="button"
-              className="mt-4 btn btn-primary"
-              onClick={() => window.location.assign("/upload")}
-            >
-              Adicionar PDFs
-            </button>
-          ) : reviewMode === "due" && totalCount > 0 ? (
+          {reviewMode === "due" && totalCount > 0 ? (
             <button
               type="button"
               className="mt-4 btn btn-primary"
