@@ -108,9 +108,18 @@ export default function DecksPage() {
   };
 
   const startCreate = () => {
+    setDeckForAddingCards(null);
+    setAvailableCards([]);
+    setDeckCards([]);
+    setSelectedGroupKeys([]);
+    setCardsFeedback("");
     setFormMode("create");
     setEditingDeck(null);
     setFormData({ name: "", description: "", color: "#3b82f6" });
+
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   };
 
   const startEdit = (deck: Deck) => {
@@ -220,6 +229,7 @@ export default function DecksPage() {
   };
 
   const loadCardsForDeck = async (deck: Deck) => {
+    resetForm();
     setDeckForAddingCards(deck);
     setLoadingCards(true);
     setCardsFeedback("");
@@ -360,7 +370,7 @@ export default function DecksPage() {
           </div>
         )}
 
-        {formMode !== "idle" && (
+        {formMode !== "idle" && !deckForAddingCards && (
           <section className="mb-8 rounded-3xl border border-brand-300 bg-brand-950/35 p-8 text-white shadow-xl">
             <h2 className="mb-6 text-xl font-bold text-white">
               {formMode === "create" ? "Criar novo Deck" : `Editar "${editingDeck?.name}"`}
@@ -602,9 +612,28 @@ export default function DecksPage() {
           </section>
         ) : null}
 
-        {loading ? (
+        {(formMode !== "idle" || deckForAddingCards) ? (
+          <div className="mb-8 flex justify-center">
+            <button
+              type="button"
+              className="rounded-xl border border-brand-300 bg-brand-950/35 px-4 py-2 text-sm font-bold text-brand-100 transition hover:bg-brand-900/55"
+              onClick={() => {
+                resetForm();
+                setDeckForAddingCards(null);
+                setAvailableCards([]);
+                setDeckCards([]);
+                setSelectedGroupKeys([]);
+                setCardsFeedback("");
+              }}
+            >
+              Voltar para a lista
+            </button>
+          </div>
+        ) : null}
+
+        {formMode === "idle" && !deckForAddingCards && loading ? (
           <p className="text-center text-brand-700">Carregando Decks...</p>
-        ) : decks.length === 0 ? (
+        ) : formMode === "idle" && !deckForAddingCards && decks.length === 0 ? (
           <div className="rounded-3xl border-2 border-dashed border-brand-300 bg-brand-950/25 p-12 text-center text-white">
             <p className="text-lg font-bold text-white">Você ainda não criou nenhum Deck.</p>
             <p className="mt-2 text-white/70">Crie um Deck para começar a organizar seus estudos por tema!</p>
@@ -617,7 +646,7 @@ export default function DecksPage() {
               Criar primeiro Deck
             </button>
           </div>
-        ) : (
+        ) : formMode === "idle" && !deckForAddingCards ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {decks.map((deck) => (
               <div
@@ -668,7 +697,7 @@ export default function DecksPage() {
               </div>
             ))}
           </div>
-        )}
+        ) : null}
       </section>
     </main>
   );
