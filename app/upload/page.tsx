@@ -3,6 +3,7 @@
 import { useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Deck } from "@/types";
+import { MAX_PDF_SIZE_BYTES, formatFileSizeMB } from "@/lib/upload-limits";
 
 type GenerationMode = "standard" | "easy" | "medium" | "hard";
 
@@ -31,6 +32,7 @@ export default function UploadPage() {
   const [loadingDecks, setLoadingDecks] = useState(true);
   const [errorDecks, setErrorDecks] = useState("");
   const selectedDeck = selectedDeckId ? decks.find((deck) => deck.id === selectedDeckId) ?? null : null;
+  const maxPdfSizeLabel = formatFileSizeMB(MAX_PDF_SIZE_BYTES);
 
   useEffect(() => {
     if (!isSubmitting) {
@@ -91,6 +93,12 @@ export default function UploadPage() {
 
     if (!input.files?.[0]) {
       setStatus("Selecione um arquivo PDF.");
+      setStatusType("error");
+      return;
+    }
+
+    if (input.files[0].size > MAX_PDF_SIZE_BYTES) {
+      setStatus(`O PDF excede o tamanho máximo permitido de ${maxPdfSizeLabel}.`);
       setStatusType("error");
       return;
     }
@@ -157,6 +165,15 @@ export default function UploadPage() {
                 className="sr-only"
                 onChange={(event) => {
                   const selectedFile = event.target.files?.[0];
+
+                  if (selectedFile && selectedFile.size > MAX_PDF_SIZE_BYTES) {
+                    setFileName("Nenhum arquivo escolhido");
+                    setStatus(`O PDF excede o tamanho máximo permitido de ${maxPdfSizeLabel}.`);
+                    setStatusType("error");
+                    event.currentTarget.value = "";
+                    return;
+                  }
+
                   setFileName(selectedFile ? selectedFile.name : "Nenhum arquivo escolhido");
                 }}
               />
@@ -193,7 +210,7 @@ export default function UploadPage() {
                 </span>
               </button>
               <p className="mt-2 text-xs text-brand-700/85">
-                Dica: PDFs com pouco texto ou só imagens podem não ter conteúdo suficiente para gerar bons flashcards.
+                Dica: tamanho máximo {maxPdfSizeLabel}. PDFs com pouco texto ou só imagens podem não ter conteúdo suficiente para gerar bons flashcards.
               </p>
             </div>
 

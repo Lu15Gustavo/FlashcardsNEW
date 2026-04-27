@@ -4,6 +4,7 @@ import { buildFlashcardsFromText } from "@/lib/flashcards";
 import { generateFlashcardsWithGemini } from "@/lib/gemini";
 import { saveCards } from "@/lib/demo-store";
 import { getRouteSupabase } from "@/lib/supabase-server";
+import { MAX_PDF_SIZE_BYTES, formatFileSizeMB } from "@/lib/upload-limits";
 import type { Flashcard } from "@/types";
 
 export const dynamic = "force-dynamic";
@@ -61,6 +62,13 @@ export async function POST(request: Request) {
 
     if (pdfFile.type !== "application/pdf") {
       return NextResponse.json({ message: "Envie um arquivo PDF válido." }, { status: 400 });
+    }
+
+    if (pdfFile.size > MAX_PDF_SIZE_BYTES) {
+      return NextResponse.json(
+        { message: `O PDF excede o tamanho máximo permitido de ${formatFileSizeMB(MAX_PDF_SIZE_BYTES)}.` },
+        { status: 413 }
+      );
     }
 
     // Se um deck foi especificado, valida se pertence ao usuário
