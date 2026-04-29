@@ -53,61 +53,52 @@ async function HomeWithSessionRedirect() {
 function HomeHub({ userEmail, hasDelayedSpacedReview }: { userEmail: string; hasDelayedSpacedReview: boolean }) {
 
   return (
-    <main className="page-shell py-10">
-      <section className="rounded-3xl border border-brand-100 bg-white/90 p-8 shadow-xl md:p-10">
-        <p className="inline-block rounded-full bg-brand-50 px-4 py-1 text-xs font-black uppercase tracking-wide text-brand-700">
+    <main className="page-shell py-7">
+      <section className="rounded-2xl border border-brand-100 bg-white/90 p-5 shadow-lg md:p-6">
+        <p className="inline-block rounded-full bg-brand-50 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-brand-700">
           HUB principal
         </p>
-        <h1 className="mt-4 text-4xl font-black leading-tight text-brand-900 md:text-5xl">Central de estudo e flashcards</h1>
-        <p className="mt-3 text-lg font-bold text-brand-800">Boas-vindas! Tudo que voce precisa para estudar esta aqui.</p>
-        <p className="mt-3 max-w-3xl text-brand-900/80">
-          Acesse tudo por aqui: envio de PDF, organização de decks, seleção de modo de revisão e início dos flashcards.
-          {userEmail ? ` Conta conectada: ${userEmail}.` : ""}
+        <h1 className="mt-3 text-2xl font-black leading-tight text-brand-900 md:text-3xl">Bem-vindo ao seu HUB</h1>
+        <p className="mt-1 text-sm text-brand-900/80">
+          Acesso rápido para estudar. {userEmail ? `Conta: ${userEmail}.` : ""}
         </p>
 
-        <div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <Link href="/study" className="rounded-2xl border border-brand-200 bg-brand-50 px-5 py-4 text-brand-900 transition hover:bg-brand-100">
-            <p className="text-sm font-black uppercase tracking-wide text-brand-700">Flashcards</p>
-            <p className="mt-1 text-lg font-black">Abrir estudo agora</p>
+        <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          <Link href="/study" className="rounded-xl border border-brand-200 bg-brand-50 px-3 py-2 text-sm font-bold text-brand-900 transition hover:bg-brand-100">
+            Flashcards
           </Link>
-          <Link href="/upload" className="rounded-2xl border border-brand-200 bg-brand-50 px-5 py-4 text-brand-900 transition hover:bg-brand-100">
-            <p className="text-sm font-black uppercase tracking-wide text-brand-700">Upload</p>
-            <p className="mt-1 text-lg font-black">Enviar PDF</p>
+          <Link href="/upload" className="rounded-xl border border-brand-200 bg-brand-50 px-3 py-2 text-sm font-bold text-brand-900 transition hover:bg-brand-100">
+            Enviar PDF
           </Link>
-          <Link href="/decks" className="rounded-2xl border border-brand-200 bg-brand-50 px-5 py-4 text-brand-900 transition hover:bg-brand-100">
-            <p className="text-sm font-black uppercase tracking-wide text-brand-700">Organização</p>
-            <p className="mt-1 text-lg font-black">Gerenciar decks</p>
+          <Link href="/decks" className="rounded-xl border border-brand-200 bg-brand-50 px-3 py-2 text-sm font-bold text-brand-900 transition hover:bg-brand-100">
+            Decks
           </Link>
-          <Link href="/dashboard" className="rounded-2xl border border-brand-200 bg-brand-50 px-5 py-4 text-brand-900 transition hover:bg-brand-100">
-            <p className="text-sm font-black uppercase tracking-wide text-brand-700">Visão geral</p>
-            <p className="mt-1 text-lg font-black">Abrir dashboard</p>
+          <Link href="/dashboard" className="rounded-xl border border-brand-200 bg-brand-50 px-3 py-2 text-sm font-bold text-brand-900 transition hover:bg-brand-100">
+            Dashboard
           </Link>
         </div>
       </section>
 
-      <section className="mt-8 rounded-3xl border border-brand-100 bg-white/90 p-8 shadow-xl md:p-10">
-        <h2 className="text-2xl font-black text-brand-900">Modo de estudo</h2>
-        <p className="mt-2 text-brand-900/80">Apenas repetição espaçada fica disponível aqui.</p>
+      <section className="mt-4 rounded-2xl border border-brand-100 bg-white/90 p-5 shadow-lg md:p-6">
+        <h2 className="text-lg font-black text-brand-900">Repetição espaçada</h2>
 
-        <article className="mt-6 rounded-2xl border border-brand-200 bg-brand-50 p-5">
-          <h3 className="text-lg font-black text-brand-900">Repetição espaçada</h3>
-          <p className="mt-2 text-sm text-brand-900/80">Mostra cards com mais de 1 dia sem revisão.</p>
+        <article className="mt-3 rounded-xl border border-brand-200 bg-brand-50 p-3">
           {hasDelayedSpacedReview ? (
-            <Link href="/study?reviewMode=due" className="mt-5 inline-flex rounded-xl bg-brand-700 px-4 py-2 text-sm font-bold text-white transition hover:bg-brand-600">
+            <Link href="/study?reviewMode=due" className="inline-flex rounded-lg bg-brand-700 px-3 py-2 text-xs font-bold text-white transition hover:bg-brand-600">
               Iniciar repetição espaçada
             </Link>
           ) : (
             <button
               type="button"
               disabled
-              className="mt-5 inline-flex cursor-not-allowed rounded-xl bg-brand-300 px-4 py-2 text-sm font-bold text-white/80"
+              className="inline-flex cursor-not-allowed rounded-lg bg-brand-300 px-3 py-2 text-xs font-bold text-white/80"
               title="Disponível somente quando houver cards há mais de 1 dia sem revisão"
             >
               Iniciar repetição espaçada
             </button>
           )}
           {!hasDelayedSpacedReview ? (
-            <p className="mt-3 text-xs font-semibold text-brand-700/85">
+            <p className="mt-2 text-[11px] font-semibold text-brand-700/85">
               Ainda não há cards com 1 dia inteiro sem revisão.
             </p>
           ) : null}
