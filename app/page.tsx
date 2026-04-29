@@ -33,7 +33,15 @@ async function HomeWithSessionRedirect() {
     } = await supabase.auth.getUser();
 
     if (user) {
-      return <HomeHub userEmail={user.email ?? ""} />;
+      const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      const { count: delayedReviewCount } = await supabase
+        .from("flashcards")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .not("due_at", "is", null)
+        .lte("due_at", cutoff);
+
+      return <HomeHub userEmail={user.email ?? ""} hasDelayedSpacedReview={Number(delayedReviewCount ?? 0) > 0} />;
     }
   } catch {
     // Se o Supabase falhar, mantemos a home pública em vez de quebrar com 5xx.
@@ -42,24 +50,7 @@ async function HomeWithSessionRedirect() {
   return <HomeContent />;
 }
 
-function HomeHub({ userEmail }: { userEmail: string }) {
-  const modeOptions = [
-    {
-      href: "/study?reviewMode=smart",
-      title: "Modo inteligente",
-      description: "Prioriza cards vencidos e mantém o ritmo ideal de revisão."
-    },
-    {
-      href: "/study?reviewMode=due",
-      title: "Repetição espaçada",
-      description: "Mostra só os cards no horário certo para revisar."
-    },
-    {
-      href: "/study?reviewMode=all",
-      title: "Todos os cards",
-      description: "Treino livre para revisar todo o conteúdo do filtro."
-    }
-  ] as const;
+function HomeHub({ userEmail, hasDelayedSpacedReview }: { userEmail: string; hasDelayedSpacedReview: boolean }) {
 
   return (
     <main className="page-shell py-10">
@@ -68,6 +59,7 @@ function HomeHub({ userEmail }: { userEmail: string }) {
           HUB principal
         </p>
         <h1 className="mt-4 text-4xl font-black leading-tight text-brand-900 md:text-5xl">Central de estudo e flashcards</h1>
+        <p className="mt-3 text-lg font-bold text-brand-800">Boas-vindas! Tudo que voce precisa para estudar esta aqui.</p>
         <p className="mt-3 max-w-3xl text-brand-900/80">
           Acesse tudo por aqui: envio de PDF, organização de decks, seleção de modo de revisão e início dos flashcards.
           {userEmail ? ` Conta conectada: ${userEmail}.` : ""}
@@ -86,36 +78,40 @@ function HomeHub({ userEmail }: { userEmail: string }) {
             <p className="text-sm font-black uppercase tracking-wide text-brand-700">Organização</p>
             <p className="mt-1 text-lg font-black">Gerenciar decks</p>
           </Link>
-          <Link href="/progress" className="rounded-2xl border border-brand-200 bg-brand-50 px-5 py-4 text-brand-900 transition hover:bg-brand-100">
-            <p className="text-sm font-black uppercase tracking-wide text-brand-700">Desempenho</p>
-            <p className="mt-1 text-lg font-black">Ver progresso</p>
-          </Link>
           <Link href="/dashboard" className="rounded-2xl border border-brand-200 bg-brand-50 px-5 py-4 text-brand-900 transition hover:bg-brand-100">
             <p className="text-sm font-black uppercase tracking-wide text-brand-700">Visão geral</p>
             <p className="mt-1 text-lg font-black">Abrir dashboard</p>
-          </Link>
-          <Link href="/profile" className="rounded-2xl border border-brand-200 bg-brand-50 px-5 py-4 text-brand-900 transition hover:bg-brand-100">
-            <p className="text-sm font-black uppercase tracking-wide text-brand-700">Conta</p>
-            <p className="mt-1 text-lg font-black">Editar perfil</p>
           </Link>
         </div>
       </section>
 
       <section className="mt-8 rounded-3xl border border-brand-100 bg-white/90 p-8 shadow-xl md:p-10">
         <h2 className="text-2xl font-black text-brand-900">Modo de estudo</h2>
-        <p className="mt-2 text-brand-900/80">Escolha seu modo de revisão e já inicie a sessão de flashcards.</p>
+        <p className="mt-2 text-brand-900/80">Apenas repetição espaçada fica disponível aqui.</p>
 
-        <div className="mt-6 grid gap-4 md:grid-cols-3">
-          {modeOptions.map((mode) => (
-            <article key={mode.href} className="rounded-2xl border border-brand-200 bg-brand-50 p-5">
-              <h3 className="text-lg font-black text-brand-900">{mode.title}</h3>
-              <p className="mt-2 text-sm text-brand-900/80">{mode.description}</p>
-              <Link href={mode.href} className="mt-5 inline-flex rounded-xl bg-brand-700 px-4 py-2 text-sm font-bold text-white transition hover:bg-brand-600">
-                Iniciar nesse modo
-              </Link>
-            </article>
-          ))}
-        </div>
+        <article className="mt-6 rounded-2xl border border-brand-200 bg-brand-50 p-5">
+          <h3 className="text-lg font-black text-brand-900">Repetição espaçada</h3>
+          <p className="mt-2 text-sm text-brand-900/80">Mostra cards com mais de 1 dia sem revisão.</p>
+          {hasDelayedSpacedReview ? (
+            <Link href="/study?reviewMode=due" className="mt-5 inline-flex rounded-xl bg-brand-700 px-4 py-2 text-sm font-bold text-white transition hover:bg-brand-600">
+              Iniciar repetição espaçada
+            </Link>
+          ) : (
+            <button
+              type="button"
+              disabled
+              className="mt-5 inline-flex cursor-not-allowed rounded-xl bg-brand-300 px-4 py-2 text-sm font-bold text-white/80"
+              title="Disponível somente quando houver cards há mais de 1 dia sem revisão"
+            >
+              Iniciar repetição espaçada
+            </button>
+          )}
+          {!hasDelayedSpacedReview ? (
+            <p className="mt-3 text-xs font-semibold text-brand-700/85">
+              Ainda não há cards com 1 dia inteiro sem revisão.
+            </p>
+          ) : null}
+        </article>
       </section>
     </main>
   );
