@@ -63,46 +63,50 @@ function HomeHub({ userEmail, hasDelayedSpacedReview }: { userEmail: string; has
           Acesso rápido para estudar. {userEmail ? `Conta: ${userEmail}.` : ""}
         </p>
 
-        <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-          <Link href="/study" className="rounded-xl border border-brand-200 bg-brand-50 px-3 py-2 text-sm font-bold text-brand-900 transition hover:bg-brand-100">
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          <Link href="/study" className="rounded-lg border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-bold text-brand-900 transition hover:bg-brand-100">
             Flashcards
           </Link>
-          <Link href="/upload" className="rounded-xl border border-brand-200 bg-brand-50 px-3 py-2 text-sm font-bold text-brand-900 transition hover:bg-brand-100">
+          <Link href="/upload" className="rounded-lg border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-bold text-brand-900 transition hover:bg-brand-100">
             Enviar PDF
           </Link>
-          <Link href="/decks" className="rounded-xl border border-brand-200 bg-brand-50 px-3 py-2 text-sm font-bold text-brand-900 transition hover:bg-brand-100">
+          <Link href="/decks" className="rounded-lg border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-bold text-brand-900 transition hover:bg-brand-100">
             Decks
           </Link>
-          <Link href="/dashboard" className="rounded-xl border border-brand-200 bg-brand-50 px-3 py-2 text-sm font-bold text-brand-900 transition hover:bg-brand-100">
+          <Link href="/dashboard" className="rounded-lg border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-bold text-brand-900 transition hover:bg-brand-100">
             Dashboard
           </Link>
         </div>
       </section>
 
-      <section className="mt-4 rounded-2xl border border-brand-100 bg-white/90 p-5 shadow-lg md:p-6">
-        <h2 className="text-lg font-black text-brand-900">Repetição espaçada</h2>
-
-        <article className="mt-3 rounded-xl border border-brand-200 bg-brand-50 p-3">
+      <section className="mt-4 rounded-2xl border border-brand-100 bg-white/90 p-4 shadow-lg">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-black text-brand-900">Repetição espaçada</h2>
+            {!hasDelayedSpacedReview ? (
+              <p className="mt-1 text-[11px] font-semibold text-brand-700/85">
+                Sem cards vencidos com 1 dia.
+              </p>
+            ) : null}
+          </div>
           {hasDelayedSpacedReview ? (
-            <Link href="/study?reviewMode=due" className="inline-flex rounded-lg bg-brand-700 px-3 py-2 text-xs font-bold text-white transition hover:bg-brand-600">
-              Iniciar repetição espaçada
+            <Link
+              href="/study?reviewMode=due"
+              className="inline-flex rounded-lg border border-amber-300 bg-amber-200/60 px-3 py-1.5 text-[11px] font-black text-amber-900 shadow-sm transition hover:bg-amber-200"
+            >
+              Repetição espaçada
             </Link>
           ) : (
             <button
               type="button"
               disabled
-              className="inline-flex cursor-not-allowed rounded-lg bg-brand-300 px-3 py-2 text-xs font-bold text-white/80"
+              className="inline-flex cursor-not-allowed rounded-lg bg-brand-300 px-3 py-1.5 text-[11px] font-bold text-white/80"
               title="Disponível somente quando houver cards há mais de 1 dia sem revisão"
             >
-              Iniciar repetição espaçada
+              Repetição espaçada
             </button>
           )}
-          {!hasDelayedSpacedReview ? (
-            <p className="mt-2 text-[11px] font-semibold text-brand-700/85">
-              Ainda não há cards com 1 dia inteiro sem revisão.
-            </p>
-          ) : null}
-        </article>
+        </div>
       </section>
     </main>
   );
