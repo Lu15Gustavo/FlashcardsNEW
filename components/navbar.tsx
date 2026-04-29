@@ -1,7 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { FlashcardsNavLink } from "@/components/flashcards-nav-link";
 import { UserMenu } from "@/components/user-menu";
 import { getServerSupabase } from "@/lib/supabase-server";
 
@@ -10,7 +9,6 @@ const links = [
   { href: "/auth", label: "Login/Cadastro" },
   { href: "/dashboard", label: "Dashboard" },
   { href: "/upload", label: "Enviar PDF" },
-  { href: "/study-mode", label: "Modo de estudo" },
   { href: "/decks", label: "Decks" }
 ];
 
@@ -61,9 +59,6 @@ export async function Navbar() {
                 </Link>
               </li>
             ))}
-            <li>
-              <FlashcardsNavLink />
-            </li>
           </ul>
           {isAuthenticated && userEmail ? <UserMenu email={userEmail} /> : null}
           <ThemeToggle />
