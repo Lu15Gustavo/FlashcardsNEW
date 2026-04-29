@@ -53,57 +53,69 @@ async function HomeWithSessionRedirect() {
 function HomeHub({ userEmail, hasDelayedSpacedReview }: { userEmail: string; hasDelayedSpacedReview: boolean }) {
 
   return (
-    <main className="page-shell py-7">
-      <section className="rounded-2xl border border-brand-100 bg-white/90 p-5 shadow-lg md:p-6">
-        <p className="inline-block rounded-full bg-brand-50 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-brand-700">
-          HUB principal
+    <main className="page-shell py-8">
+      <section className="relative overflow-hidden rounded-3xl border border-brand-100/60 bg-gradient-to-br from-white/95 via-white/80 to-white/70 p-6 shadow-[0_18px_50px_rgba(15,10,31,0.2)] md:p-8">
+        <div className="pointer-events-none absolute -right-16 top-8 h-40 w-40 rounded-full bg-gradient-to-br from-brand-200/50 via-cyan-200/40 to-transparent blur-2xl" />
+        <div className="pointer-events-none absolute -left-10 bottom-0 h-32 w-32 rounded-full bg-gradient-to-br from-emerald-200/40 via-brand-200/30 to-transparent blur-2xl" />
+
+        <p className="inline-flex items-center gap-2 rounded-full border border-brand-200/70 bg-white/80 px-3 py-1 text-[10px] font-black uppercase tracking-[0.25em] text-brand-700">
+          HUB
+          <span className="h-1 w-1 rounded-full bg-brand-500" />
+          Estudo
         </p>
-        <h1 className="mt-3 text-2xl font-black leading-tight text-brand-900 md:text-3xl">Bem-vindo ao seu HUB</h1>
-        <p className="mt-1 text-sm text-brand-900/80">
-          Acesso rápido para estudar. {userEmail ? `Conta: ${userEmail}.` : ""}
+        <h1 className="mt-3 text-2xl font-black text-brand-900 md:text-3xl">Bem-vindo ao seu HUB</h1>
+        <p className="mt-1 text-xs font-semibold text-brand-900/70">
+          {userEmail ? `Conta: ${userEmail}.` : "Acesso rapido para estudar."}
         </p>
 
-        <div className="mt-4 grid grid-cols-2 gap-2">
-          <Link href="/study" className="rounded-lg border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-bold text-brand-900 transition hover:bg-brand-100">
-            Flashcards
+        <div className="mt-5 grid w-full max-w-xl grid-cols-2 gap-3">
+          <Link href="/study" className="group rounded-2xl border border-brand-200/80 bg-white/90 px-4 py-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:bg-white">
+            <p className="text-[11px] font-black uppercase tracking-wide text-brand-500">Flashcards</p>
+            <p className="mt-1 text-sm font-black text-brand-900">Estudar</p>
+            <span className="mt-2 inline-flex text-[11px] font-semibold text-brand-700/75 group-hover:text-brand-900">Comece uma sessao de revisao.</span>
           </Link>
-          <Link href="/upload" className="rounded-lg border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-bold text-brand-900 transition hover:bg-brand-100">
-            Enviar PDF
+          <Link href="/upload" className="group rounded-2xl border border-brand-200/80 bg-white/90 px-4 py-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:bg-white">
+            <p className="text-[11px] font-black uppercase tracking-wide text-brand-500">Upload</p>
+            <p className="mt-1 text-sm font-black text-brand-900">Enviar PDF</p>
+            <span className="mt-2 inline-flex text-[11px] font-semibold text-brand-700/75 group-hover:text-brand-900">Gere flashcards a partir do PDF.</span>
           </Link>
-          <Link href="/decks" className="rounded-lg border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-bold text-brand-900 transition hover:bg-brand-100">
-            Decks
+          <Link href="/decks" className="group rounded-2xl border border-brand-200/80 bg-white/90 px-4 py-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:bg-white">
+            <p className="text-[11px] font-black uppercase tracking-wide text-brand-500">Decks</p>
+            <p className="mt-1 text-sm font-black text-brand-900">Organizar</p>
+            <span className="mt-2 inline-flex text-[11px] font-semibold text-brand-700/75 group-hover:text-brand-900">Agrupe e gerencie seus decks.</span>
           </Link>
-          <Link href="/dashboard" className="rounded-lg border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-bold text-brand-900 transition hover:bg-brand-100">
-            Dashboard
+          <Link href="/dashboard" className="group rounded-2xl border border-brand-200/80 bg-white/90 px-4 py-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:bg-white">
+            <p className="text-[11px] font-black uppercase tracking-wide text-brand-500">Dashboard</p>
+            <p className="mt-1 text-sm font-black text-brand-900">Visao geral</p>
+            <span className="mt-2 inline-flex text-[11px] font-semibold text-brand-700/75 group-hover:text-brand-900">Resumo das suas atividades.</span>
           </Link>
         </div>
       </section>
 
-      <section className="mt-4 rounded-2xl border border-brand-100 bg-white/90 p-4 shadow-lg">
+      <section className="mt-4 rounded-2xl border border-brand-100/70 bg-white/90 px-4 py-3 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-sm font-black text-brand-900">Repetição espaçada</h2>
+            <p className="text-[11px] font-black uppercase tracking-wide text-brand-600">Repeticao espacada</p>
             {!hasDelayedSpacedReview ? (
-              <p className="mt-1 text-[11px] font-semibold text-brand-700/85">
-                Sem cards vencidos com 1 dia.
-              </p>
+              <p className="mt-1 text-[10px] font-semibold text-brand-700/75">Sem cards vencidos ha 1 dia.</p>
             ) : null}
           </div>
           {hasDelayedSpacedReview ? (
             <Link
               href="/study?reviewMode=due"
-              className="inline-flex rounded-lg border border-amber-300 bg-amber-200/60 px-3 py-1.5 text-[11px] font-black text-amber-900 shadow-sm transition hover:bg-amber-200"
+              className="inline-flex items-center gap-2 rounded-full border border-amber-300 bg-amber-200/70 px-3 py-1.5 text-[10px] font-black uppercase tracking-wide text-amber-900 shadow-sm"
             >
-              Repetição espaçada
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+              Disponivel
             </Link>
           ) : (
             <button
               type="button"
               disabled
-              className="inline-flex cursor-not-allowed rounded-lg bg-brand-300 px-3 py-1.5 text-[11px] font-bold text-white/80"
-              title="Disponível somente quando houver cards há mais de 1 dia sem revisão"
+              className="inline-flex cursor-not-allowed rounded-full bg-brand-300 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-white/80"
+              title="Disponivel somente quando houver cards ha mais de 1 dia sem revisao"
             >
-              Repetição espaçada
+              Indisponivel
             </button>
           )}
         </div>
