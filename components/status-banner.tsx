@@ -23,10 +23,10 @@ const variantStyles: Record<StatusVariant, { wrapper: string; badge: string; tit
     accent: "bg-emerald-500/15"
   },
   info: {
-    wrapper: "border-brand-300/80 bg-gradient-to-r from-brand-50 to-violet-50 text-brand-950 shadow-[0_12px_30px_rgba(120,36,240,0.08)]",
-    badge: "bg-brand-600 text-white shadow-[0_8px_16px_rgba(120,36,240,0.22)]",
-    title: "text-brand-800",
-    accent: "bg-brand-600/15"
+    wrapper: "border-brand-500/30 bg-gradient-to-r from-brand-950/70 to-slate-900/80 text-brand-50 shadow-[0_12px_30px_rgba(15,23,42,0.35)]",
+    badge: "bg-brand-600 text-white shadow-[0_8px_16px_rgba(120,36,240,0.32)]",
+    title: "text-brand-100",
+    accent: "bg-brand-500/20"
   }
 };
 

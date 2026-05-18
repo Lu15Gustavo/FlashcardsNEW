@@ -19,12 +19,17 @@ export default function ResetPasswordPage() {
     const validateRecoveryLink = async () => {
       try {
         const url = new URL(window.location.href);
-        const params = url.searchParams;
-        const authType = params.get("type");
-        const tokenHash = params.get("token_hash")?.trim();
-        const oauthCode = params.get("code");
-        const errorDescription = params.get("error_description")?.trim();
-        const errorCode = params.get("error_code")?.trim();
+        const searchParams = url.searchParams;
+        const hashParams = new URLSearchParams(url.hash.replace(/^#/, ""));
+        const getParam = (name: string) => searchParams.get(name) ?? hashParams.get(name);
+        const authType = getParam("type");
+        const tokenHash = getParam("token_hash")?.trim();
+        const oauthCode = getParam("code");
+        const accessToken = getParam("access_token");
+        const refreshToken = getParam("refresh_token");
+        const errorDescription = getParam("error_description")?.trim();
+        const errorCode = getParam("error_code")?.trim();
+        const recoveryRequested = authType === "recovery" || getParam("mode") === "reset";
 
         if (errorCode === "otp_expired") {
           setPageState("error");
@@ -38,10 +43,34 @@ export default function ResetPasswordPage() {
           return;
         }
 
-        if (tokenHash && (authType === "recovery" || params.get("mode") === "reset")) {
+        if (tokenHash && recoveryRequested) {
           const { error } = await supabase.auth.verifyOtp({
             type: "recovery",
             token_hash: tokenHash
+          });
+
+          if (!error) {
+            setPageState("ready");
+            setMessage("");
+            return;
+          }
+
+          const { data: sessionData } = await supabase.auth.getSession();
+          if (sessionData.session) {
+            setPageState("ready");
+            setMessage("");
+            return;
+          }
+
+          setPageState("error");
+          setMessage(mapAuthErrorMessage(error.message || "invalid token", "reset"));
+          return;
+        }
+
+        if (accessToken && refreshToken && recoveryRequested) {
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken
           });
 
           if (!error) {
@@ -80,6 +109,15 @@ export default function ResetPasswordPage() {
           setPageState("error");
           setMessage(mapAuthErrorMessage(error.message || "invalid token", "reset"));
           return;
+        }
+
+        if (recoveryRequested) {
+          const { data: sessionData } = await supabase.auth.getSession();
+          if (sessionData.session) {
+            setPageState("ready");
+            setMessage("");
+            return;
+          }
         }
 
         const { data: sessionData } = await supabase.auth.getSession();

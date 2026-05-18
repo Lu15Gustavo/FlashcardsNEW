@@ -48,7 +48,7 @@ export default function ConfirmationPage() {
         const signupConfirmed = authType === "signup";
 
         if (recoveryRequested) {
-          window.location.assign("/reset-password" + url.search);
+          window.location.assign("/reset-password" + url.search + url.hash);
           return;
         }
 

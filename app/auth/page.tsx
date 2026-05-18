@@ -75,7 +75,7 @@ export default function AuthPage() {
 
       // Para links de recuperação, usar página dedicada de redefinição.
       if (recoveryRequested && (tokenHash || oauthCode || errorDescription || errorCode || params.get("mode") === "reset")) {
-        window.location.assign("/reset-password" + url.search);
+        window.location.assign("/reset-password" + url.search + url.hash);
         return;
       }
 
