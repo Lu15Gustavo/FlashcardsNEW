@@ -65,16 +65,18 @@ export default function AuthPage() {
   useEffect(() => {
     const setupAuthFromUrl = () => {
       const url = new URL(window.location.href);
-      const params = url.searchParams;
-      const authType = params.get("type");
-      const recoveryRequested = params.get("mode") === "reset" || authType === "recovery";
-      const tokenHash = params.get("token_hash")?.trim();
-      const oauthCode = params.get("code");
-      const errorDescription = params.get("error_description")?.trim();
-      const errorCode = params.get("error_code")?.trim();
+      const searchParams = url.searchParams;
+      const hashParams = new URLSearchParams(url.hash.replace(/^#/, ""));
+      const getParam = (name: string) => searchParams.get(name) ?? hashParams.get(name);
+      const authType = getParam("type");
+      const recoveryRequested = getParam("mode") === "reset" || authType === "recovery";
+      const tokenHash = getParam("token_hash")?.trim();
+      const oauthCode = getParam("code");
+      const errorDescription = getParam("error_description")?.trim();
+      const errorCode = getParam("error_code")?.trim();
 
       // Para links de recuperação, usar página dedicada de redefinição.
-      if (recoveryRequested && (tokenHash || oauthCode || errorDescription || errorCode || params.get("mode") === "reset")) {
+      if (recoveryRequested) {
         window.location.assign("/reset-password" + url.search + url.hash);
         return;
       }
