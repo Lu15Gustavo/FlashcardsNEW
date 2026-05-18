@@ -171,7 +171,7 @@ export default function StudyPage() {
       setReviewMode(mode);
       setEmptyDeckStudy(false);
 
-      if (!hasDocumentFilter && !hasDeckFilter && nextDocuments.length > 1) {
+      if (!hasDocumentFilter && !hasDeckFilter && nextDocuments.length > 1 && mode !== "due") {
         setMustChooseDocument(true);
         setStudyStarted(false);
         setCards([]);
@@ -195,7 +195,7 @@ export default function StudyPage() {
       const nextCards = Array.isArray(data.cards) ? data.cards : [];
       setCards(nextCards);
 
-      const initialQueue = hasDeckFilter ? nextCards : nextCards.slice(0, 15);
+      const initialQueue = hasDeckFilter || mode === "due" ? nextCards : nextCards.slice(0, 15);
       setSessionQueue(initialQueue);
       setCurrentIndex(0);
       setWrongCardIds([]);
