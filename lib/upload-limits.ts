@@ -1,4 +1,4 @@
-export const MAX_PDF_SIZE_BYTES = 15 * 1024 * 1024;
+export const MAX_PDF_SIZE_BYTES = 50 * 1024 * 1024;
 
 export function formatFileSizeMB(sizeInBytes: number) {
   const mb = sizeInBytes / (1024 * 1024);
