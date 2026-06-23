@@ -1,19 +1,6 @@
 import Link from "next/link";
 import { getServerSupabase } from "@/lib/supabase-server";
 
-const plans = [
-  {
-    name: "Básico",
-    price: "R$ 29/mês",
-    features: ["Até 5 PDFs por mês", "Revisão limitada", "Progresso básico"]
-  },
-  {
-    name: "Premium",
-    price: "R$ 79/mês",
-    features: ["PDFs ilimitados", "SRS completo", "Relatórios avançados"]
-  }
-];
-
 export default function HomePage() {
   const hasSupabaseEnv =
     Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) && Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
@@ -142,7 +129,6 @@ function HomeContent() {
             <Link href="/auth" className="btn btn-primary">
               Começar agora
             </Link>
-            <span className="btn btn-secondary">Checkout em breve</span>
           </div>
         </div>
 
@@ -158,18 +144,18 @@ function HomeContent() {
       </section>
 
       <section className="mt-12 grid gap-5 md:grid-cols-2">
-        {plans.map((plan) => (
-          <article key={plan.name} className="card p-7">
-            <h3 className="text-2xl font-black text-brand-800">{plan.name}</h3>
-            <p className="mt-1 text-3xl font-black text-brand-700">{plan.price}</p>
-            <ul className="mt-4 space-y-2 text-brand-900/85">
-              {plan.features.map((feature) => (
-                <li key={feature}>• {feature}</li>
-              ))}
-            </ul>
-            <span className="btn btn-secondary mt-6 inline-block">Disponível em breve</span>
-          </article>
-        ))}
+        <article className="card p-7">
+          <h3 className="text-2xl font-black text-brand-800">Foco no estudo</h3>
+          <p className="mt-2 text-brand-900/85">
+            O MVP prioriza upload de PDF, geração automática de flashcards e revisão com repetição espaçada.
+          </p>
+        </article>
+        <article className="card p-7">
+          <h3 className="text-2xl font-black text-brand-800">Progresso e organização</h3>
+          <p className="mt-2 text-brand-900/85">
+            A aplicação acompanha histórico, filtros, notas, tags e indicadores de estudo por documento.
+          </p>
+        </article>
       </section>
     </main>
   );

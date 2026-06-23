@@ -57,14 +57,6 @@ export function UserMenu({ email }: UserMenuProps) {
           <p className="px-3 py-2 text-xs font-bold text-brand-100/85">{email}</p>
 
           <Link
-            href="/checkout"
-            className="block rounded-xl border border-transparent px-3 py-2 text-sm font-bold text-white/90 transition hover:border-brand-300/30 hover:bg-brand-700/30"
-            onClick={() => setOpen(false)}
-          >
-            Assinaturas
-          </Link>
-
-          <Link
             href="/profile"
             className="block rounded-xl border border-transparent px-3 py-2 text-sm font-bold text-white/90 transition hover:border-brand-300/30 hover:bg-brand-700/30"
             onClick={() => setOpen(false)}
